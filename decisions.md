@@ -416,3 +416,63 @@ gap (Bayesian MMM / geo-experimentation vs. the candidate's attribution work).
 (Saturday's agent build) a day early. The instruction's explicit anti-sycophancy
 and anti-fabrication rules — "most changes are NOT worth attention", "never say
 sponsorship is available when the posting is silent" — both held under real data.
+
+---
+
+## 2026-08-28 — Single-tenant by design; multi-user deferred (with the gap documented)
+
+**Decision:** Ship single-tenant. Do not add multi-user before the Sunday
+deadline.
+
+**Why:** it is real scope on the day `plan.md` already flags as the schedule's
+single point of failure, and judges will not test multi-tenancy. The stronger
+move is to state the boundary explicitly rather than to sit on one accidentally.
+
+### What IS configurable today
+
+Everything describing *who the candidate is* lives in `config/profile.json` and
+is read at runtime — no code changes required to swap people:
+
+`target_titles`, `skills`, `core_skills`, `exclude_titles`,
+`work_authorization.exclude_if_posting_matches`, `domain_preference`,
+`highlights`, `avoid`.
+
+**Verified empirically**, not assumed. Running the same unmodified filter over
+Reddit's 153 postings with two different profiles:
+
+| Profile | Passed | Sample of what surfaced |
+|---|---|---|
+| Aakash (DS/ML) | 53/153 | ML Engineering Manager, Ads Conversion Modeling |
+| Test persona (junior frontend) | 30/153 | Senior Frontend Engineer, Media / Home Experience |
+
+The agent's instruction is persona-neutral and reads the profile through the
+`get_candidate_profile` tool, so it adapts without edits.
+
+### What is NOT configurable — three single-tenant assumptions
+
+1. **`profile_id="default"` is hardcoded** at two call sites
+   (`collector/pipeline.py:67`, `common/tools.py:57`).
+
+2. **`decisions/{doc_id}` is not scoped by profile.** This is the one actual
+   *bug*, not merely a missing feature: two users assessing the same Reddit
+   posting share a document id, so the second verdict **silently overwrites**
+   the first. Postings are correctly shared — a job posting is the same fact
+   for everyone — but a verdict is per-person and is not keyed that way.
+
+3. **The `companies` collection is global.** All users would share one tracked
+   list; nobody can watch Stripe while someone else watches Airbnb.
+
+### What multi-user would take (~2–3 hrs, post-submission)
+
+- Key decisions as `decisions/{profile_id}_{doc_id}` — fixes the collision
+- Scope companies per profile (`companies/{profile_id}_{board_token}`, or a
+  `profile_ids` array on each company doc)
+- Thread `profile_id` through the pipeline and into the Pub/Sub message payload
+- Add an upload + parse route (`pypdf` already works — it was used to extract
+  the candidate's own resume from PDF)
+
+The `profiles/{profile_id}` schema was chosen on 2026-08-26 specifically to
+keep this cheap, so none of the above is a migration — it is additive.
+
+**For the Devpost write-up:** state this as a known boundary with a costed
+path, not as an oversight.
