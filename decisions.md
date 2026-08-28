@@ -368,3 +368,51 @@ way a demo passes while the real system is broken.
 This is the mitigation for the "there is nothing to diff" risk in `plan.md`:
 postings rarely change organically within a few days, and every company's first
 run is baselined to silence.
+
+---
+
+## 2026-08-28 — Tools redesigned: the model judges, tools fetch facts
+
+**Decision:** Replaced the originally planned tools (`extract_requirements`,
+`compare_to_resume`, `decide_worth_attention`, `draft_application_bullets`)
+with four that do something the model cannot:
+
+| Tool | Why it earns its place |
+|---|---|
+| `get_candidate_profile()` | Retrieves profile from Firestore — data the model does not have |
+| `get_previous_version(doc_id)` | Returns what the posting said last time. **The product's whole premise**, and genuinely unknowable to the model |
+| `check_hard_blockers(text)` | Deterministic eligibility matching — a fact, not a judgement |
+| `record_assessment(...)` | Writes the structured verdict — a real side effect |
+
+**Why the original set was wrong:** three of the four were *judgements*, which
+is the model's job. Implemented as Python functions they would either be stubs
+(theatre) or hardcoded logic quietly replacing model reasoning with keyword
+matching. "What does `decide_worth_attention` actually do?" would have been the
+weakest question a judge could ask.
+
+---
+
+## 2026-08-28 — Agent verified end to end on live postings ✅
+
+**New posting** (Reddit, Principal Data Scientist, Ads) — called
+`get_candidate_profile` and `check_hard_blockers` but correctly **did not**
+call `get_previous_version`, since a new posting has no history. Tool selection
+was reasoned, not scripted.
+
+- Bullets cited concrete profile facts: Markov chain attribution, GBM at
+  40%/50%, 500K records at 80% accuracy, $178M/$57M
+- Caught an unanticipated gap: *"requires 12+ years for MS holders (candidate
+  has 11)"*
+- Reported *"silent on visa sponsorship"* rather than claiming it was
+  available — the specific failure the instruction was written to prevent
+
+**Modified posting** (Airbnb, Senior Data Scientist, MarTech Measurement) —
+called all four tools including `get_previous_version`, and identified both
+changes: the title upgrade to Senior **and** newly added AI-agent requirements.
+Also caught the 24-month contract term from the body and named a real skills
+gap (Bayesian MMM / geo-experimentation vs. the candidate's attribution work).
+
+**Significance:** this retires the largest remaining risk in `plan.md`
+(Saturday's agent build) a day early. The instruction's explicit anti-sycophancy
+and anti-fabrication rules — "most changes are NOT worth attention", "never say
+sponsorship is available when the posting is silent" — both held under real data.

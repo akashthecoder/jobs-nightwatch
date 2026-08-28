@@ -91,6 +91,12 @@ def get_postings_for_company(board_token: str) -> dict[str, dict]:
     return {d.id: d.to_dict() for d in q.stream()}
 
 
+def get_posting(doc_id: str) -> dict[str, Any] | None:
+    """One posting's stored state. Backs the agent's get_previous_version tool."""
+    snap = db().collection(POSTINGS).document(doc_id).get()
+    return snap.to_dict() if snap.exists else None
+
+
 def upsert_postings(postings: Iterable[JobPosting]) -> int:
     """Write postings in batches. Firestore caps a batch at 500 operations."""
     batch = db().batch()
