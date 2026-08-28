@@ -28,13 +28,19 @@ This is the source material for the architecture diagram due Sunday Aug 30 — k
 | Environment setup | ✅ Done — APIs enabled, venv built, Gemini verified | — |
 | Firestore database | ✅ Created — `(default)`, us-central1, Native mode | — |
 | ADK canary spike | ✅ **GREEN** — tool-calling loop confirmed | — |
-| `common/schema.py` | ⬜ Not started | — |
-| `common/tools.py` | ⬜ Not started | — |
-| Collector | ⬜ Not started | — |
-| Diff engine | ⬜ Not started | — |
-| Pub/Sub topic + subscription | ⬜ Not started | — |
-| Agent (`agent/agent.py` + `server.py`) | ⬜ Not started | — |
+| `common/schema.py` | ✅ Normalized shape + content hashing | — |
+| Greenhouse adapter | ✅ Verified on all 10 boards | — |
+| `common/relevance.py` | ✅ Cuts 2,762 → 316 (11.4%) | — |
+| `common/store.py` | ✅ Firestore access, seeded | — |
+| Diff engine | ✅ 17 unit tests pass, baselining verified | — |
+| Pub/Sub topic | ✅ `job-changes`, publish/pull verified | — |
+| Collection pipeline | ✅ End-to-end on live data | — |
+| `common/tools.py` | ✅ 4 tools, zero framework imports | — |
+| Agent (`agent/agent.py`) | ✅ **Verified on live new + modified postings** | — |
+| Agent server (`server.py`) | ⬜ FastAPI `/pubsub-push` wrapper | — |
 | Dashboard | ⬜ Not started | — |
+| Cloud Run deploys | ⬜ Not started | — |
+| Pub/Sub push subscription | ⬜ Not started | — |
 | Cloud Scheduler | ⬜ Not started | — |
 
 ### Verified working ADK pattern (2.8.0)
