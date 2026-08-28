@@ -1,0 +1,24 @@
+{
+  "profile_id": "default",
+  "name": "REPLACE_ME",
+  "headline": "REPLACE_ME - e.g. Senior Backend Engineer, 8 yrs, Python/GCP",
+  "years_experience": 0,
+  "location": "REPLACE_ME",
+  "open_to": ["remote", "hybrid"],
+  "skills": [
+    "REPLACE_ME - list the skills you'd want matched against a posting"
+  ],
+  "strengths": [
+    "REPLACE_ME - short phrases the agent can turn into application bullets"
+  ],
+  "highlights": [
+    {
+      "what": "REPLACE_ME - a concrete accomplishment",
+      "impact": "REPLACE_ME - the measurable outcome"
+    }
+  ],
+  "avoid": [
+    "REPLACE_ME - e.g. on-call heavy roles, pure frontend, relocation"
+  ],
+  "notes": "Free text the agent reads as extra context when judging fit."
+}

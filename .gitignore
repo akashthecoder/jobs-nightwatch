@@ -1,0 +1,28 @@
+# Secrets — never commit. This repo goes to hackathon judges.
+.env
+*.env
+!.env.example
+service-account*.json
+*credentials*.json
+
+# Raw resume source files — these carry phone/address/email.
+# Drop yours in resume_source/; only the curated config/profile.json is committed.
+resume_source/
+resume.*
+Resume.*
+*.docx
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# macOS
+.DS_Store
+
+# Local scratch
+scratch/
+*.log

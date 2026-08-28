@@ -1,0 +1,15 @@
+{
+  "_comment": "Companies tracked by Jobs NightWatch. Seeded into Firestore as companies/{board_token}. The 'enabled' flag is authoritative in Firestore once seeded - the dashboard toggles it there, not here.",
+  "companies": [
+    { "board_token": "databricks", "name": "Databricks",  "ats": "greenhouse", "enabled": true },
+    { "board_token": "datadog",    "name": "Datadog",     "ats": "greenhouse", "enabled": true },
+    { "board_token": "cloudflare", "name": "Cloudflare",  "ats": "greenhouse", "enabled": true },
+    { "board_token": "pinterest",  "name": "Pinterest",   "ats": "greenhouse", "enabled": true },
+    { "board_token": "affirm",     "name": "Affirm",      "ats": "greenhouse", "enabled": true },
+    { "board_token": "coinbase",   "name": "Coinbase",    "ats": "greenhouse", "enabled": true },
+    { "board_token": "airbnb",     "name": "Airbnb",      "ats": "greenhouse", "enabled": true },
+    { "board_token": "reddit",     "name": "Reddit",      "ats": "greenhouse", "enabled": true },
+    { "board_token": "twilio",     "name": "Twilio",      "ats": "greenhouse", "enabled": true },
+    { "board_token": "sofi",       "name": "SoFi",        "ats": "greenhouse", "enabled": true }
+  ]
+}
