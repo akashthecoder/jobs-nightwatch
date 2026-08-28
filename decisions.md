@@ -274,3 +274,53 @@ The hackathon requires Gemini 3.5 or greater, so this is not a preference — th
 2. **Silence must not be read as either answer.** The agent must report sponsorship as *"not stated"* when the posting is silent. Inferring "sponsorship available" from absence would be fabricating a fact the candidate would act on.
 
 **Method note:** the regexes were tested against real postings before being trusted, not just against invented examples. The decoy phrases above were not anticipated when the patterns were written — they were discovered by scanning live data.
+
+---
+
+## 2026-08-28 — Pre-filter cuts 2,762 → 316 (11.4%); two real bugs found by testing on live data
+
+**Decision:** Relevance pre-filter is title-match first, with a core-skills fallback, plus a categorical title knockout.
+
+**Measured result across all ten boards:**
+
+| Company | Total | Passed | % |
+|---|---|---|---|
+| Databricks | 856 | 61 | 7.1% |
+| Datadog | 453 | 21 | 4.6% |
+| Cloudflare | 313 | 14 | 4.5% |
+| Pinterest | 214 | 55 | 25.7% |
+| Affirm | 210 | 24 | 11.4% |
+| Coinbase | 184 | 22 | 12.0% |
+| Airbnb | 174 | 43 | 24.7% |
+| Reddit | 153 | 53 | 34.6% |
+| Twilio | 145 | 13 | 9.0% |
+| SoFi | 60 | 10 | 16.7% |
+| **TOTAL** | **2,762** | **316** | **11.4%** |
+
+**316 is the worst case, not the daily rate.** The first run is baselined and publishes nothing; steady state processes only actual changes.
+
+### Bug 1: the sponsorship regex silently killed all 313 Cloudflare postings
+
+Cloudflare's boilerplate contains:
+
+> "...your authorization to receive software or technology controlled under these U.S. export laws **without sponsorship for an export license**."
+
+That is **export-licence** sponsorship, not visa sponsorship. The unanchored pattern `without (?:visa |immigration )?sponsorship` matched it and dropped every Cloudflare posting — a **silent** failure, since filtered postings never reach the agent or the dashboard. Cloudflare simply showed 0.0% and looked like a company with no data roles.
+
+Fixed by requiring the "authorization **to work**" anchor, which export-control language never satisfies. Added to `tests/test_sponsorship_filter.py` as a regression case.
+
+**Why no synthetic test would have caught it:** all 23 hand-written cases passed. Nobody invents export-control boilerplate when imagining sponsorship phrasings. Only real postings contained it.
+
+### Bug 2: `[^.]` cannot cross the periods in "U.S."
+
+`authoriz(?:ed|ation) to work[^.]{0,80}without sponsorship` failed on *"authorized to work in the U.S. without sponsorship"* because the negated character class stops at the periods inside the abbreviation. Replaced with a bounded non-greedy `.{0,90}?`, keeping the "to work" anchor so Cloudflare stays out.
+
+### Bug 3: `avoid_terms` was dead code
+
+The constructor loaded `profile["avoid"]` into `self.avoid_terms` and never referenced it. Replaced with an explicit `exclude_titles` list applied as a categorical knockout.
+
+**Why it mattered:** the skills fallback was passing `Customer Engineer, India`, `Presales Customer Engineer, Sydney`, and `Full Stack Engineer - Internal Audit`. Sales and presales postings routinely name Python, SQL and GCP without being technical roles. Counting *any* six skills was measuring vocabulary, not relevance.
+
+**Fix:** two changes. Title knockout for categorically wrong roles (sales, presales, recruiting, support, design, intern...), and a `core_skills` list for the fallback that deliberately **excludes** generic terms like Python/SQL/Git/GCP, which appear across every job function and carry almost no signal alone. Threshold: 4 core skills.
+
+**Deliberately NOT fixed:** a few marginal survivors remain (`Staff Product Manager, AI Platform`, `Sr. Developer Advocate, AI and ML`). Tuning these away would move fit judgement out of the agent and into brittle keyword lists — the exact failure the pre-filter design warns against. The agent correctly rejects them, and a false positive costs a fraction of a cent while a false negative is invisible and unrecoverable.

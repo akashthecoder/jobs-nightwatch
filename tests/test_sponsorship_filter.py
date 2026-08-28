@@ -37,6 +37,14 @@ SHOULD_NOT_BLOCK = [
     "Partner with executive sponsors to align on roadmap.",
     "Build models to detect fraud and abuse.",
     "Work authorization: we support sponsorship where needed.",
+    # REGRESSION (2026-08-28): real Cloudflare boilerplate. This is EXPORT
+    # LICENCE sponsorship, not visa sponsorship. An unanchored
+    # "without ... sponsorship" pattern matched it and silently dropped all
+    # 313 Cloudflare postings. No synthetic test case would have contained
+    # export-control language - only real data surfaced this.
+    "Please note that any offer of employment may be conditioned on your "
+    "authorization to receive software or technology controlled under these "
+    "U.S. export laws without sponsorship for an export license.",
 ]
 
 

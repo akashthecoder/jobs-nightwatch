@@ -20,6 +20,38 @@
     "Data Science Manager"
   ],
 
+  "_exclude_titles_note": "Title-level knockout. These roles are categorically wrong regardless of how many skill keywords appear in the description - sales and presales postings routinely name Python/SQL/GCP without being technical roles.",
+  "exclude_titles": [
+    "account executive", "account manager", "sales", "presales", "pre-sales",
+    "customer engineer", "customer success", "solutions architect",
+    "solutions engineer", "support engineer", "technical support",
+    "recruiter", "recruiting", "talent acquisition",
+    "business development", "partner manager", "channel",
+    "intern", "internship", "apprentice",
+    "designer", "ux ", "ui ", "brand ", "copywriter",
+    "accountant", "controller", "paralegal", "counsel", "attorney",
+    "facilities", "workplace", "executive assistant",
+    "data center", "datacenter", "field engineer", "network engineer"
+  ],
+
+  "_core_skills_note": "Strong DS/ML signals used by the skills fallback. Deliberately EXCLUDES generic terms (Python, SQL, Git, GCP) which appear in postings across every function and carry almost no signal on their own.",
+  "core_skills": [
+    "machine learning", "predictive modeling", "propensity model",
+    "gradient boosting", "gbm", "xgboost", "random forest",
+    "clustering", "segmentation", "feature engineering",
+    "statistical modeling", "statistics", "regression",
+    "a/b testing", "experimentation", "causal inference",
+    "scikit-learn", "pytorch", "tensorflow",
+    "nlp", "natural language processing",
+    "llm", "large language model", "generative ai", "genai",
+    "rag", "retrieval-augmented", "embedding", "vector database",
+    "ai agent", "langchain", "prompt engineering",
+    "recommendation", "personalization", "ranking model",
+    "attribution", "forecasting", "time series",
+    "model deployment", "model monitoring", "mlops",
+    "data science", "data scientist", "applied scientist"
+  ],
+
   "skills": [
     "Python", "SQL", "Pandas", "NumPy", "scikit-learn",
     "Machine Learning", "Predictive Modeling", "GBM", "Gradient Boosting",
@@ -49,9 +81,9 @@
       "will not sponsor",
       "do(?:es)? not (?:offer|provide|sponsor)[^.]{0,40}sponsorship",
       "no(?:t)? (?:visa |immigration )?sponsorship (?:is )?(?:available|offered|provided)",
-      "without (?:the need for )?(?:visa |immigration )?sponsorship",
       "not (?:be )?eligible for (?:visa |immigration )?sponsorship",
-      "authoriz(?:ed|ation) to work[^.]{0,60}without sponsorship",
+      "without (?:the need for )?(?:visa|immigration|employment) sponsorship",
+      "authoriz(?:ed|ation) to work.{0,90}?without.{0,25}?sponsorship",
       "must be a (?:US|U\\.S\\.) citizen",
       "(?:US|U\\.S\\.) citizenship (?:is )?required",
       "active security clearance",
