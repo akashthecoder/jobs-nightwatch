@@ -241,3 +241,36 @@ The hackathon requires Gemini 3.5 or greater, so this is not a preference — th
 **Reinforces the existing architecture principle:** deterministic code does cheap, mechanical work (comparison, filtering); the model does expensive judgment (does this change *matter*, and what would you say about it). This is the same reasoning that keeps the diff engine LLM-free — see the 2026-08-26 entry on that.
 
 **Note:** the filter must stay deliberately loose. It is a cost guard, not the fit decision — over-tuning it moves judgment out of the agent and into brittle keyword lists, which would undercut the product.
+
+---
+
+## 2026-08-27 — Sponsorship is a hard pre-filter block; domain match is NOT
+
+**Decision:** Two profile constraints, handled deliberately differently.
+
+**Sponsorship — hard block, deterministic, pre-model.** The candidate requires visa sponsorship, so postings that explicitly decline to sponsor are excluded before any Gemini call. Eligibility is a *fact*, not a judgement, so it belongs in code. Twelve regexes cover the common phrasings plus citizenship/clearance requirements.
+
+**Domain — a scored dimension, NOT a knockout.** The candidate asked for "a domain match," but the deepest domains (healthcare, marketing analytics) appear in **none** of the ten tracked companies, which are fintech, infra and consumer. Hard-gating on domain would filter out essentially every posting from the boards actually being watched. Instead `domain_preference` carries `strong` / `adjacent` / `weak` term lists, and the agent must explicitly state and justify domain overlap in its output. This preserves the signal without making the system return nothing.
+
+---
+
+## 2026-08-27 — Sponsorship filter validated against 1,090 real postings
+
+**What was tested:** 23 synthetic cases (12 must-block, 11 must-not-block), then every posting across SoFi, Coinbase and Databricks.
+
+**Results:**
+
+| Board | Blocked | Notes |
+|---|---|---|
+| SoFi | 0 / 61 | no restrictions stated |
+| Coinbase | 0 / 184 | no restrictions stated |
+| Databricks | 3 / 845 | all Public Sector roles requiring U.S. citizenship for classified access |
+
+**Zero false positives across 1,090 postings**, despite abundant decoy language: "Sponsor bank", "citizen developers", "co-sponsored demand gen", "sponsor development", "sponsoring pre-consensus bets". Naive matching on `sponsor` or `citizen` would have wrongly excluded all of these — a silent failure, since an over-filtered posting never reaches the agent and never appears on the dashboard.
+
+**The important finding: ~0.3% of postings state any sponsorship restriction at all.** Two consequences:
+
+1. **The sponsorship filter is a safety net, not a volume reducer.** Cutting the 2,749 down to a sane number must come from title/skills relevance matching, not this.
+2. **Silence must not be read as either answer.** The agent must report sponsorship as *"not stated"* when the posting is silent. Inferring "sponsorship available" from absence would be fabricating a fact the candidate would act on.
+
+**Method note:** the regexes were tested against real postings before being trusted, not just against invented examples. The decoy phrases above were not anticipated when the patterns were written — they were discovered by scanning live data.
