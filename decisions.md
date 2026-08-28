@@ -324,3 +324,47 @@ The constructor loaded `profile["avoid"]` into `self.avoid_terms` and never refe
 **Fix:** two changes. Title knockout for categorically wrong roles (sales, presales, recruiting, support, design, intern...), and a `core_skills` list for the fallback that deliberately **excludes** generic terms like Python/SQL/Git/GCP, which appear across every job function and carry almost no signal alone. Threshold: 4 core skills.
 
 **Deliberately NOT fixed:** a few marginal survivors remain (`Staff Product Manager, AI Platform`, `Sr. Developer Advocate, AI and ML`). Tuning these away would move fit judgement out of the agent and into brittle keyword lists — the exact failure the pre-filter design warns against. The agent correctly rejects them, and a false positive costs a fraction of a cent while a false negative is invisible and unrecoverable.
+
+---
+
+## 2026-08-28 — Collection pipeline works end to end (verified against live data + Firestore)
+
+**Order of operations in `collector/pipeline.py`, and why:**
+
+    fetch -> diff -> filter -> publish -> persist
+
+**Persist comes LAST, deliberately.** If publishing fails, stored state is left
+untouched so the next run re-detects the same changes. Persisting first would
+mark changes as seen even though nothing was ever dispatched — silently losing
+them with no error anywhere.
+
+**Verified sequence (SoFi, 60 postings):**
+
+| Step | Result |
+|---|---|
+| First run (not baselined) | 60 stored, **0 changes**, `baselined=true` |
+| Second run (unchanged board) | **0 changes** — hash comparison stable |
+| After simulated mutations | **4 changes: 1 new, 2 modified, 1 removed** |
+| Relevance filter | 2 published, 2 dropped (Product Designer, Credit Manager) |
+| Pub/Sub | message pulled back with correct `change_type` / `doc_id` attributes |
+
+**REMOVED changes bypass the relevance filter.** If a role mattered enough to
+alert on, its disappearance matters too — and there is no posting body left to
+match against anyway.
+
+---
+
+## 2026-08-28 — `scripts/simulate_change.py` mutates STORED state, not the live board
+
+**Decision:** The demo/test harness doctors what Firestore believes it saw last
+time, rather than faking a board response.
+
+**Why:** The next collection then sees the *real* Greenhouse board differ from
+the doctored history, so the entire production code path executes — real HTTP
+fetch, real diff, real filter, real publish. Mocking the board response would
+exercise a different path than the one being demonstrated, which is the classic
+way a demo passes while the real system is broken.
+
+This is the mitigation for the "there is nothing to diff" risk in `plan.md`:
+postings rarely change organically within a few days, and every company's first
+run is baselined to silence.
