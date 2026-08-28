@@ -1,0 +1,20 @@
+# Never bake local config or credentials into the image.
+# Cloud Run supplies these as environment variables instead.
+.env
+*.env
+!.env.example
+resume_source/
+*credentials*.json
+
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+.git/
+.gitignore
+tests/
+spikes/
+scripts/
+*.md
+.DS_Store

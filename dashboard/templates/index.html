@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jobs NightWatch</title>
+<style>
+  :root {
+    --bg:#0f1115; --panel:#171a21; --line:#262b36; --text:#e6e8ee;
+    --muted:#8b93a5; --accent:#7aa2f7; --good:#7ee787; --warn:#f0a868; --bad:#6b7280;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text);
+         font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+  .wrap { max-width:1080px; margin:0 auto; padding:28px 20px 80px; }
+  header { border-bottom:1px solid var(--line); padding-bottom:18px; margin-bottom:26px; }
+  h1 { margin:0 0 6px; font-size:26px; letter-spacing:-.3px; }
+  .tag { color:var(--muted); font-size:14px; }
+  h2 { font-size:15px; text-transform:uppercase; letter-spacing:.6px;
+       color:var(--muted); margin:34px 0 12px; font-weight:600; }
+  .panel { background:var(--panel); border:1px solid var(--line);
+           border-radius:10px; padding:16px 18px; }
+  .companies { display:flex; flex-wrap:wrap; gap:8px; }
+  .chip { display:flex; align-items:center; gap:7px; background:#1e2330;
+          border:1px solid var(--line); border-radius:20px; padding:5px 12px; font-size:13px; }
+  .chip.off { opacity:.42; }
+  .dot { width:7px; height:7px; border-radius:50%; background:var(--good); }
+  .chip.off .dot { background:var(--bad); }
+  .chip button { background:none; border:none; color:var(--muted);
+                 cursor:pointer; font-size:12px; padding:0; text-decoration:underline; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+          padding:16px 18px; margin-bottom:12px; }
+  .card.attn { border-left:3px solid var(--accent); }
+  .row { display:flex; justify-content:space-between; gap:14px; align-items:flex-start; }
+  .title { font-weight:600; font-size:16px; }
+  .title a { color:var(--text); text-decoration:none; }
+  .title a:hover { color:var(--accent); }
+  .meta { color:var(--muted); font-size:13px; margin-top:3px; }
+  .score { font-size:22px; font-weight:700; white-space:nowrap; }
+  .badge { display:inline-block; font-size:11px; text-transform:uppercase;
+           letter-spacing:.5px; padding:2px 8px; border-radius:4px; margin-right:6px; }
+  .b-new { background:#1c3a5e; color:#9ec5ff; }
+  .b-modified { background:#5a4218; color:#f5c97a; }
+  .b-removed { background:#5a2020; color:#ffa8a8; }
+  .headline { margin:10px 0 0; }
+  .changed { margin-top:9px; padding:9px 12px; background:#1b2030;
+             border-left:2px solid var(--warn); border-radius:0 6px 6px 0; font-size:14px; }
+  ul { margin:9px 0 0; padding-left:19px; }
+  li { margin-bottom:5px; }
+  .concerns li { color:var(--warn); }
+  details { margin-top:10px; }
+  summary { cursor:pointer; color:var(--muted); font-size:13px; }
+  .btn { background:var(--accent); color:#0d1117; border:none; padding:8px 15px;
+         border-radius:7px; font-weight:600; cursor:pointer; font-size:14px; }
+  .empty { color:var(--muted); padding:22px; text-align:center; }
+  form.inline { display:inline; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Jobs NightWatch</h1>
+    <div class="tag">Job boards show you what exists. This shows you what <em>changed</em>.</div>
+  </header>
+
+  <div class="row" style="align-items:center;">
+    <h2 style="margin:0;">Tracked companies</h2>
+    {% if has_collector %}
+    <form class="inline" method="post" action="/run-now">
+      <button class="btn" type="submit">Run now</button>
+    </form>
+    {% endif %}
+  </div>
+
+  <div class="panel companies" style="margin-top:12px;">
+    {% for c in companies %}
+    <span class="chip {% if not c.enabled %}off{% endif %}">
+      <span class="dot"></span>
+      {{ c.name }}
+      {% if not c.baselined %}<span style="color:var(--muted);font-size:11px;">(not baselined)</span>{% endif %}
+      <form class="inline" method="post" action="/toggle">
+        <input type="hidden" name="board_token" value="{{ c.board_token }}">
+        <input type="hidden" name="enabled" value="{{ 'false' if c.enabled else 'true' }}">
+        <button type="submit">{{ 'pause' if c.enabled else 'resume' }}</button>
+      </form>
+    </span>
+    {% endfor %}
+  </div>
+
+  <h2>Worth your attention ({{ worth|length }})</h2>
+  {% if not worth %}
+    <div class="panel empty">
+      Nothing needs your attention right now.<br>
+      <span style="font-size:13px;">A company's first collection establishes a baseline and reports nothing &mdash;
+      there is no &ldquo;change&rdquo; until there is a previous version to compare against.</span>
+    </div>
+  {% endif %}
+  {% for d in worth %}
+    <div class="card attn">
+      <div class="row">
+        <div>
+          <span class="badge b-{{ d.change_type }}">{{ d.change_type }}</span>
+          <span class="title"><a href="{{ d.url }}" target="_blank" rel="noopener">{{ d.title }}</a></span>
+          <div class="meta">{{ d.company }} &middot; domain: {{ d.domain_match }}</div>
+        </div>
+        <div class="score">{{ d.fit_score }}</div>
+      </div>
+      <p class="headline">{{ d.headline }}</p>
+      {% if d.what_changed and d.what_changed not in ('new posting','posting removed') %}
+        <div class="changed"><strong>What changed:</strong> {{ d.what_changed }}</div>
+      {% endif %}
+      {% if d.application_bullets %}
+        <strong style="font-size:13px;color:var(--muted);">What you'd lead with</strong>
+        <ul>{% for b in d.application_bullets %}<li>{{ b }}</li>{% endfor %}</ul>
+      {% endif %}
+      {% if d.concerns %}
+        <details>
+          <summary>{{ d.concerns|length }} concern{{ '' if d.concerns|length == 1 else 's' }}</summary>
+          <ul class="concerns">{% for c in d.concerns %}<li>{{ c }}</li>{% endfor %}</ul>
+        </details>
+      {% endif %}
+      <details><summary>reasoning</summary><p class="meta">{{ d.reasoning }}</p></details>
+    </div>
+  {% endfor %}
+
+  {% if rest %}
+  <h2>Assessed, not a fit ({{ rest|length }})</h2>
+  {% for d in rest %}
+    <div class="card">
+      <div class="row">
+        <div>
+          <span class="badge b-{{ d.change_type }}">{{ d.change_type }}</span>
+          <span class="title">{{ d.title }}</span>
+          <div class="meta">{{ d.company }}</div>
+        </div>
+        <div class="score" style="color:var(--muted);">{{ d.fit_score }}</div>
+      </div>
+      <p class="headline meta">{{ d.headline }}</p>
+    </div>
+  {% endfor %}
+  {% endif %}
+
+</div>
+</body>
+</html>
