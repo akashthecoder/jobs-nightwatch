@@ -10,6 +10,7 @@ import os
 
 from google.adk import Agent
 from google.adk.runners import InMemoryRunner
+from google.genai import types
 
 from common import store, tools
 
@@ -112,14 +113,30 @@ def format_change_prompt(msg: dict) -> str:
 async def assess_change(msg: dict) -> dict:
     """Run the agent over one change. Returns a summary of what happened.
 
-    A fresh runner per change: the workload is one-shot with no conversation,
-    so there is no state worth carrying between invocations.
+    A fresh runner and session per change: the workload is one-shot with no
+    conversation, so there is no state worth carrying between invocations.
+    This uses run_async rather than run_debug -- run_debug is a local testing
+    convenience, and Runner does not auto-create sessions (auto_create_session
+    defaults to False), so the session is created explicitly.
     """
     agent = build_agent()
     runner = InMemoryRunner(agent=agent, app_name=APP_NAME)
 
+    user_id = msg.get("profile_id", "default")
+    session = await runner.session_service.create_session(
+        app_name=APP_NAME, user_id=user_id
+    )
+
     prompt = format_change_prompt(msg)
-    events = await runner.run_debug(prompt, quiet=True)
+    new_message = types.Content(role="user", parts=[types.Part(text=prompt)])
+
+    events = []
+    async for ev in runner.run_async(
+        user_id=user_id,
+        session_id=session.id,
+        new_message=new_message,
+    ):
+        events.append(ev)
 
     tool_calls, final_text = [], None
     for ev in events:

@@ -476,3 +476,59 @@ keep this cheap, so none of the above is a migration — it is additive.
 
 **For the Devpost write-up:** state this as a known boundary with a costed
 path, not as an oversight.
+
+---
+
+## 2026-08-28 — Agent server: HTTP status IS the ack protocol
+
+**Decision:** `POST /pubsub-push` maps failure modes to status codes deliberately.
+
+| Situation | Status | Why |
+|---|---|---|
+| Malformed / undecodable message | **204** | It will never parse on retry. Nacking would make Pub/Sub redeliver a poison message until it expires. |
+| Agent raised (Gemini timeout, Firestore blip) | **500** | Assumed transient — nack so Pub/Sub retries with backoff rather than silently losing the work. |
+| Agent ran but never called `record_assessment` | **500** | Retry may succeed, but logged loudly: a persistent version of this is a *prompt* problem, not an infrastructure one. |
+| Success, or duplicate | **200** | Ack. |
+
+**Verified locally:** malformed body → 204, non-JSON body → 204, real base64
+Pub/Sub envelope → 200 with the expected tool calls.
+
+---
+
+## 2026-08-28 — ⚠️ Ack deadline MUST be raised to 600s (default 10s would 4x the cost)
+
+**Measured:** one change takes **35.7 seconds** end to end (Gemini reasoning +
+3–4 tool calls + Firestore writes).
+
+**The default Pub/Sub push ack deadline is 10 seconds.** Left alone, Pub/Sub
+would redeliver at 10s, 20s and 30s while the first delivery is still working.
+Idempotency does **not** save us here: the check reads the decision document,
+and the first invocation has not written it yet, so every redelivery sees no
+prior decision and runs the agent. That is roughly **4× the model spend per
+message**, and nothing would look broken — the right answer still lands.
+
+**Required when creating the subscription:**
+
+    gcloud pubsub subscriptions create job-changes-push \
+      --topic=job-changes \
+      --push-endpoint=<AGENT_URL>/pubsub-push \
+      --ack-deadline=600
+
+**Also implied:** Cloud Run request timeout must exceed 35s (default 300s is
+fine), and the agent service should not have low concurrency limits that
+serialise messages the design intends to process in parallel.
+
+---
+
+## 2026-08-28 — Idempotency keyed on content_hash, not doc_id
+
+**Decision:** A duplicate is defined as *same doc_id AND same content_hash*.
+
+**Why:** keying on `doc_id` alone would permanently suppress reassessment — a
+posting that changes a second time would be skipped as "already seen", which
+defeats the entire product. Keying on the content hash means a genuinely
+changed posting is correctly reassessed while an at-least-once redelivery of
+the *same* change is not.
+
+**Verified:** first delivery 35.7s (full agent run), duplicate delivery 0.18s
+returning `{"status": "duplicate"}` with no model call.

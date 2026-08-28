@@ -154,6 +154,11 @@ def put_decision(doc_id: str, decision: dict) -> None:
     db().collection(DECISIONS).document(doc_id).set(decision)
 
 
+def merge_decision(doc_id: str, fields: dict) -> None:
+    """Patch fields onto an existing decision without clobbering the verdict."""
+    db().collection(DECISIONS).document(doc_id).set(fields, merge=True)
+
+
 def get_decision(doc_id: str) -> dict[str, Any] | None:
     snap = db().collection(DECISIONS).document(doc_id).get()
     return snap.to_dict() if snap.exists else None
