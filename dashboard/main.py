@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 
 import requests
@@ -35,16 +36,59 @@ def health():
     return {"ok": True, "service": "dashboard"}
 
 
+def ago(iso: str | None) -> str:
+    """Render an ISO timestamp as 'just now' / '4 min ago' / '2 hours ago'.
+
+    This page is about change over time, so a bare list with no timestamps
+    gives a visitor no way to tell live results from a static mockup.
+    """
+    if not iso:
+        return ""
+    try:
+        then = datetime.fromisoformat(iso.replace("Z", "+00:00"))
+    except ValueError:
+        return ""
+    secs = (datetime.now(timezone.utc) - then).total_seconds()
+    if secs < 60:
+        return "just now"
+    if secs < 3600:
+        m = int(secs // 60)
+        return f"{m} min ago"
+    if secs < 86400:
+        h = int(secs // 3600)
+        return f"{h} hour{'s' if h > 1 else ''} ago"
+    d = int(secs // 86400)
+    return f"{d} day{'s' if d > 1 else ''} ago"
+
+
 @app.get("/", response_class=HTMLResponse)
-def index(request: Request):
+def index(request: Request, ran: str | None = None, error: str | None = None):
     companies = store.list_companies()
     decisions = store.list_decisions(limit=200)
+
+    for c in companies:
+        c["last_checked"] = ago(c.get("last_collected_at"))
+    for d in decisions:
+        d["when"] = ago(d.get("decided_at"))
 
     # Surface what needs attention first; everything else is still visible
     # below, because "we looked and it is not a fit" is a useful answer too.
     worth = [d for d in decisions if d.get("worth_attention")]
     rest = [d for d in decisions if not d.get("worth_attention")]
     worth.sort(key=lambda d: d.get("fit_score", 0), reverse=True)
+
+    last_run = max(
+        (c.get("last_collected_at") for c in companies if c.get("last_collected_at")),
+        default=None,
+    )
+
+    stats = {
+        "companies": sum(1 for c in companies if c.get("enabled")),
+        "postings": sum(c.get("posting_count", 0) for c in companies),
+        "changes": len(decisions),
+        "flagged": len(worth),
+        "last_run": ago(last_run),
+    }
 
     # Starlette >=1.x signature: request first, then template name, then context.
     # The older TemplateResponse(name, {"request": ...}) form raises an opaque
@@ -56,7 +100,9 @@ def index(request: Request):
             "companies": companies,
             "worth": worth,
             "rest": rest,
-            "total_decisions": len(decisions),
+            "stats": stats,
+            "ran": ran,
+            "error": error,
             "has_collector": bool(COLLECTOR_URL),
         },
     )

@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import logging
 import os
+from datetime import datetime, timezone
 from typing import Any, Iterable
 
 from google.cloud import firestore
@@ -80,6 +81,21 @@ def set_company_enabled(board_token: str, enabled: bool) -> None:
 
 def mark_baselined(board_token: str) -> None:
     db().collection(COMPANIES).document(board_token).update({"baselined": True})
+
+
+def record_run_stats(board_token: str, posting_count: int, change_count: int) -> None:
+    """Stamp a company with the outcome of the run that just finished.
+
+    The dashboard renders these so a visitor can see the system is actually
+    running on a timer, rather than showing a static page of past results.
+    """
+    db().collection(COMPANIES).document(board_token).update(
+        {
+            "last_collected_at": datetime.now(timezone.utc).isoformat(),
+            "posting_count": posting_count,
+            "last_change_count": change_count,
+        }
+    )
 
 
 # --------------------------------------------------------------------------

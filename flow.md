@@ -37,11 +37,11 @@ This is the source material for the architecture diagram due Sunday Aug 30 — k
 | Collection pipeline | ✅ End-to-end on live data | — |
 | `common/tools.py` | ✅ 4 tools, zero framework imports | — |
 | Agent (`agent/agent.py`) | ✅ **Verified on live new + modified postings** | — |
-| Agent server (`server.py`) | ⬜ FastAPI `/pubsub-push` wrapper | — |
-| Dashboard | ⬜ Not started | — |
-| Cloud Run deploys | ⬜ Not started | — |
-| Pub/Sub push subscription | ⬜ Not started | — |
-| Cloud Scheduler | ⬜ Not started | — |
+| Agent server (`server.py`) | ✅ Ack-protocol + idempotency | 🚀 [agent](https://nightwatch-agent-745162634071.us-central1.run.app) |
+| Dashboard | ✅ Stats, timestamps, change hero | 🚀 **[LIVE](https://nightwatch-dashboard-745162634071.us-central1.run.app)** |
+| Collector service | ✅ `/collect` | 🚀 [collector](https://nightwatch-collector-745162634071.us-central1.run.app) |
+| Pub/Sub push subscription | ✅ OIDC, ack-deadline 600s | — |
+| Cloud Scheduler | ✅ every 3h | — |
 
 ### Verified working ADK pattern (2.8.0)
 

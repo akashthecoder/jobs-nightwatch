@@ -123,6 +123,8 @@ def run_collection(only_board_token: str | None = None) -> RunResult:
                 store.mark_baselined(token)
                 cr.baselined_now = True
 
+            store.record_run_stats(token, len(postings), len(changes))
+
         except Exception as e:  # noqa: BLE001 - one company must not kill the run
             log.exception("collection failed for %s", token)
             cr.error = f"{type(e).__name__}: {e}"
