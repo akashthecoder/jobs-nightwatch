@@ -25,6 +25,7 @@ log = logging.getLogger(__name__)
 COMPANIES = "companies"
 POSTINGS = "postings"
 DECISIONS = "decisions"
+HISTORY = "posting_history"
 PROFILES = "profiles"
 
 _client: firestore.Client | None = None
@@ -92,8 +93,27 @@ def get_postings_for_company(board_token: str) -> dict[str, dict]:
 
 
 def get_posting(doc_id: str) -> dict[str, Any] | None:
-    """One posting's stored state. Backs the agent's get_previous_version tool."""
+    """One posting's current stored state."""
     snap = db().collection(POSTINGS).document(doc_id).get()
+    return snap.to_dict() if snap.exists else None
+
+
+def save_history(doc_id: str, previous: dict) -> None:
+    """Preserve the version a posting had BEFORE this run overwrote it.
+
+    Required because the agent runs asynchronously: the collector publishes to
+    Pub/Sub and then immediately upserts the new state, so by the time the
+    agent asks what the posting used to say, postings/{doc_id} already holds
+    the NEW text. Without this the agent reports "nothing changed" for every
+    modification -- a failure that only appears once deployed, since a local
+    synchronous run reads the old value before it is overwritten.
+    """
+    db().collection(HISTORY).document(doc_id).set(previous)
+
+
+def get_history(doc_id: str) -> dict[str, Any] | None:
+    """The version a posting had before the most recent change."""
+    snap = db().collection(HISTORY).document(doc_id).get()
     return snap.to_dict() if snap.exists else None
 
 

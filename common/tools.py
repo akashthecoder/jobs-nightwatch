@@ -77,7 +77,10 @@ def get_previous_version(doc_id: str) -> dict:
     """
     if _store is None:
         return {"found": False, "reason": "store not bound"}
-    prev = _store.get_posting(doc_id)
+    # Read the history snapshot, NOT postings/{doc_id}. The collector has
+    # already overwritten the live record with the new version by the time
+    # this runs, so reading it would always report "nothing changed".
+    prev = _store.get_history(doc_id)
     if not prev:
         return {"found": False, "reason": "no previous version recorded"}
     return {

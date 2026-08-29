@@ -102,6 +102,13 @@ def run_collection(only_board_token: str | None = None) -> RunResult:
                 else:
                     cr.filtered_out += 1
 
+            # Preserve prior versions BEFORE the upsert overwrites them.
+            # The agent runs asynchronously, so without this it would read the
+            # already-updated record and conclude nothing changed.
+            for ch in changes:
+                if ch.change_type == ChangeType.MODIFIED and ch.previous:
+                    store.save_history(ch.doc_id, ch.previous)
+
             cr.published = publish_changes(to_publish)
 
             # Persist only after publishing succeeded.

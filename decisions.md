@@ -532,3 +532,70 @@ the *same* change is not.
 
 **Verified:** first delivery 35.7s (full agent run), duplicate delivery 0.18s
 returning `{"status": "duplicate"}` with no model call.
+
+---
+
+## 2026-08-29 — 🐛 Race condition: the agent's core tool was broken ONLY in production
+
+**Symptom:** the first fully-deployed end-to-end run produced a decision saying
+*"title, qualifications, and responsibilities are unchanged"* — for a posting
+whose stored title had been deliberately changed from "Data Scientist" to
+"Principal Data Scientist". The agent's most valuable capability silently
+returned nothing useful.
+
+**Cause:** `collector/pipeline.py` publishes to Pub/Sub and then immediately
+calls `upsert_postings`, overwriting `postings/{doc_id}` with the NEW version.
+The agent runs **asynchronously**, a few seconds later, and
+`get_previous_version` read that same document — which by then held the new
+text. It compared the new version against itself and correctly concluded
+nothing had changed.
+
+**Why every local test passed:** running the agent directly is *synchronous* —
+it reads the stored record before the pipeline overwrites it. The bug requires
+the async Pub/Sub hop to appear. Local tests, unit tests, and the FastAPI
+handler tests all passed while production was broken.
+
+**Fix:** a dedicated `posting_history/{doc_id}` collection. The pipeline writes
+the prior version there **before** the upsert, and `get_previous_version` reads
+history rather than live state. The previous version is now explicitly
+preserved rather than incidentally still-present.
+
+**Verified after redeploy:** *"Title updated from 'Data Scientist, Ads' to
+'Principal Data Scientist, Ads', ... adding explicit experience minimums (12+
+years for M.S.), and publishing the $268,000–$365,100 salary range."*
+
+**Learning (for the Devpost write-up):** this is the single most instructive bug
+of the build. An asynchronous system has ordering hazards that a synchronous
+test cannot expose, and *the failure was silent* — no error, no exception, no
+retry, just a confidently-worded wrong answer. Nothing short of deploying it
+and reading the actual output would have caught it. It is also a direct
+consequence of a deliberate architectural choice (Pub/Sub for fault isolation):
+decoupling buys resilience and costs ordering guarantees.
+
+---
+
+## 2026-08-29 — Deployed to Cloud Run; OIDC wired end to end
+
+| Service | URL | Auth | Max instances |
+|---|---|---|---|
+| Dashboard | `nightwatch-dashboard-745162634071.us-central1.run.app` | **public** | 5 |
+| Collector | `nightwatch-collector-745162634071.us-central1.run.app` | OIDC only | 2 |
+| Agent | `nightwatch-agent-745162634071.us-central1.run.app` | OIDC only | 10 |
+
+**Auth chosen: OIDC, not username/password.** Pub/Sub and Cloud Scheduler speak
+OIDC natively; a shared password would mean writing auth code *and* fighting
+the platform to make those callers use it — strictly more work and less secure,
+with a secret that would live in a repo handed to judges. The dashboard needs
+no auth at all because toggling was deliberately made non-destructive.
+
+**Cloud Build IAM friction (expected — Risk #4):** newer GCP projects no longer
+grant the default compute service account the roles Cloud Build needs. First
+deploy failed with `storage.objects.get denied`. Fixed by granting the compute
+SA `cloudbuild.builds.builder`, `storage.objectViewer`, `artifactregistry.writer`
+and `logging.logWriter`.
+
+**Cost posture:** `min-instances=0` everywhere, so Cloud Run scales to zero and
+bills nothing when idle — measured cold start 5.2s, warm 2.4s. `min-instances=1`
+is to be enabled **only while recording the demo**, then turned off; leaving it
+on through a ~2 month judging window would cost $120–240. `max-instances` caps
+(5 / 2 / 10) bound the worst case against a retry storm or crawler.
