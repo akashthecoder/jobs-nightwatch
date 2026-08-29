@@ -61,6 +61,48 @@ def ago(iso: str | None) -> str:
     return f"{d} day{'s' if d > 1 else ''} ago"
 
 
+def summary_stats(companies: list[dict], decisions: list[dict]) -> dict:
+    """Headline numbers, shared by every page.
+
+    About and Architecture quote live figures rather than hardcoded ones, so
+    the explanatory pages cannot drift out of date as the boards move.
+    """
+    last_run = max(
+        (c.get("last_collected_at") for c in companies if c.get("last_collected_at")),
+        default=None,
+    )
+    return {
+        "companies": sum(1 for c in companies if c.get("enabled")),
+        "postings": sum(c.get("posting_count", 0) for c in companies),
+        "matches": sum(c.get("match_count", 0) for c in companies),
+        "changes": len(decisions),
+        "flagged": sum(1 for d in decisions if d.get("worth_attention")),
+        "last_run": ago(last_run),
+    }
+
+
+@app.get("/about", response_class=HTMLResponse)
+def about(request: Request):
+    companies = store.list_companies()
+    decisions = store.list_decisions(limit=200)
+    return templates.TemplateResponse(
+        request,
+        "about.html",
+        {"page": "about", "stats": summary_stats(companies, decisions)},
+    )
+
+
+@app.get("/architecture", response_class=HTMLResponse)
+def architecture(request: Request):
+    companies = store.list_companies()
+    decisions = store.list_decisions(limit=200)
+    return templates.TemplateResponse(
+        request,
+        "architecture.html",
+        {"page": "architecture", "stats": summary_stats(companies, decisions)},
+    )
+
+
 @app.get("/", response_class=HTMLResponse)
 def index(
     request: Request,
@@ -70,6 +112,10 @@ def index(
 ):
     companies = store.list_companies()
     decisions = store.list_decisions(limit=200)
+
+    # Keep unfiltered copies: the summary bar always reports the whole system,
+    # even when the view is narrowed to one company.
+    all_companies, all_decisions = companies, list(decisions)
 
     for c in companies:
         c["last_checked"] = ago(c.get("last_collected_at"))
@@ -100,19 +146,7 @@ def index(
     rest = [d for d in decisions if not d.get("worth_attention")]
     worth.sort(key=lambda d: d.get("fit_score", 0), reverse=True)
 
-    last_run = max(
-        (c.get("last_collected_at") for c in companies if c.get("last_collected_at")),
-        default=None,
-    )
-
-    stats = {
-        "companies": sum(1 for c in companies if c.get("enabled")),
-        "postings": sum(c.get("posting_count", 0) for c in companies),
-        "matches": sum(c.get("match_count", 0) for c in companies),
-        "changes": len(decisions),
-        "flagged": len(worth),
-        "last_run": ago(last_run),
-    }
+    stats = summary_stats(all_companies, all_decisions)
 
     # Starlette >=1.x signature: request first, then template name, then context.
     # The older TemplateResponse(name, {"request": ...}) form raises an opaque
@@ -121,6 +155,7 @@ def index(
         request,
         "index.html",
         {
+            "page": "dashboard",
             "companies": companies,
             "worth": worth,
             "rest": rest,

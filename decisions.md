@@ -654,3 +654,47 @@ to a job-board view, and the product's thesis is that job boards are the wrong
 shape. It earns its place by making the filtering *visible* — "54 of 153 Reddit
 roles match you" demonstrates the system understands the profile — but changes
 remain the headline and the only thing the model is spent on.
+
+---
+
+## 2026-08-29 — About and Architecture pages added as tabs
+
+**Decision:** Three tabs — Dashboard, About, Architecture — sharing a
+`base.html` template so styling lives in one place.
+
+**Why About:** a judge arriving cold has no idea what the product is. The
+dashboard shows results but never explains the premise, and the premise is the
+whole idea. The page states the problem (a tracked role quietly changes and
+nobody tells you), explains the pipeline in plain language, and is explicit
+about what the system deliberately does *not* do — it is not a job board, and
+it is single-tenant.
+
+**Why Architecture, and a bonus:** the Devpost rules require an architecture
+diagram. Building it as a live page means the requirement is satisfied by a URL
+judges can click rather than a static image attached to a form — the diagram is
+part of the product rather than paperwork about it.
+
+**The diagram traces one "Run now" click end to end**, 11 numbered steps, with
+colour coding that carries the core architectural argument:
+
+| Colour | Meaning |
+|---|---|
+| Blue | Cloud Run service |
+| **Green** | **Deterministic code — no model** |
+| Purple | Gemini 3.7 Flash |
+| Grey | Storage / messaging |
+| Amber | External API |
+
+Steps 3–7 are green and bracketed as "about 2 seconds, no model". Only step 9
+is purple. That visual makes the point faster than prose can: **the model is
+used for judgement, never for comparison.**
+
+**Live figures, not hardcoded ones.** Both pages render `stats` from Firestore,
+so the prose reads "Of 2,756 postings being watched, 315 match your profile"
+using the real current numbers. Hardcoding them would guarantee the explanatory
+pages drift out of date as the boards move — and stale numbers on an "about"
+page are worse than none.
+
+**Implementation note:** the diagram is inline SVG with no external assets or
+libraries. It scales, renders identically everywhere, adds no page weight, and
+cannot break from a CDN going away.

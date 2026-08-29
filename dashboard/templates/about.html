@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}About — Jobs NightWatch{% endblock %}
+{% block content %}
+
+<div class="prose">
+
+  <h2 style="margin-top:26px;">The problem</h2>
+
+  <p class="lead">
+    Job boards are built to show you what <em>exists</em> right now. Nobody tells
+    you what <em>changed</em>.
+  </p>
+
+  <p>
+    A role you have been tracking for three weeks quietly adds a requirement you
+    do not have. A posting gets rewritten from &ldquo;Data Scientist&rdquo; to
+    &ldquo;Principal Data Scientist&rdquo; and the experience bar moves from five
+    years to twelve. The job you applied to last Tuesday is pulled on Thursday
+    and nobody says a word.
+  </p>
+
+  <p>
+    You would only notice any of this by re-reading every posting you care about,
+    every day, and remembering exactly what each one used to say. Nobody does
+    that. <strong>That gap is what this system fills.</strong>
+  </p>
+
+  <h2>How it works</h2>
+
+  <p>
+    Jobs NightWatch watches {{ stats.companies }} companies&rsquo; career pages on
+    a timer. It remembers every posting it has seen. When something changes, it
+    reads the posting properly, works out whether the change matters to you, and
+    writes up what you would say if you applied.
+  </p>
+
+  <h3>1. It runs itself</h3>
+  <p>
+    Cloud Scheduler wakes the system every few hours. This is the difference
+    between an agent and a website you have to remember to visit. You can also
+    trigger a run yourself with the <strong>Run now</strong> button.
+  </p>
+
+  <h3>2. It remembers</h3>
+  <p>
+    Every posting is normalised and fingerprinted with a SHA-256 hash of its
+    content. Today&rsquo;s fingerprint is compared against the one stored last
+    time. That comparison is <strong>plain deterministic code &mdash; no AI</strong>.
+    Deciding whether two records differ is a comparison, not a judgement; using a
+    language model there would be slower, more expensive, and less accurate than
+    a hash.
+  </p>
+
+  <div class="callout">
+    <strong>A company&rsquo;s first run reports nothing, on purpose.</strong>
+    &ldquo;Changed&rdquo; is undefined when there is no previous version to
+    compare against. Treating everything you see for the first time as
+    &ldquo;new&rdquo; would fire {{ stats.postings }} alerts nobody wants. The
+    first collection quietly establishes a baseline; alerting starts from the
+    second run.
+  </div>
+
+  <h3>3. It filters before it thinks</h3>
+  <p>
+    Of {{ stats.postings }} postings being watched, {{ stats.matches }} match your
+    profile &mdash; a deterministic check against your target titles and core
+    skills. This is a cost guard, not the fit decision. A warehouse role does not
+    need a language model to rule it out.
+  </p>
+
+  <h3>4. Then the agent reasons</h3>
+  <p>
+    Only changes that survive the filter reach Gemini 3.7 Flash. The agent decides
+    which tools to call: it fetches your profile, retrieves what the posting said
+    <em>last time</em>, runs a deterministic eligibility check, and records its
+    verdict. The model does all the judging; the tools only fetch facts and save
+    results.
+  </p>
+
+  <h3>5. And it tells you honestly</h3>
+  <ul>
+    <li><strong>Most changes are not worth your attention</strong>, and it says so. A long list of weak matches is worse than three real ones.</li>
+    <li><strong>Application bullets cite real specifics</strong> from your background &mdash; named systems and actual numbers, not &ldquo;strong analytical skills&rdquo;.</li>
+    <li><strong>Concerns are surfaced, not buried.</strong> A seniority gap, a missing skill, or an unstated visa position all get flagged.</li>
+    <li><strong>Silence is reported as silence.</strong> If a posting says nothing about sponsorship, the agent says &ldquo;not stated&rdquo; rather than guessing in either direction.</li>
+  </ul>
+
+  <h2>What it does not do</h2>
+
+  <div class="callout warn">
+    <p style="margin:0 0 10px;"><strong>It is not a job board.</strong> The company
+    view shows which roles match your profile, but the model is only ever spent on
+    roles that <em>changed</em>. Scoring all {{ stats.matches }} matching roles
+    would cost hundreds of model calls to tell you nothing you did not already
+    know.</p>
+    <p style="margin:0;"><strong>It is single-tenant today.</strong> One profile,
+    one set of tracked companies. The data model was built to allow per-user
+    profiles later, but that is not built yet.</p>
+  </div>
+
+  <h2>Built with</h2>
+  <ul>
+    <li><strong>Gemini 3.7 Flash</strong> on Vertex AI &mdash; the reasoning</li>
+    <li><strong>Google Agent Development Kit (ADK)</strong> &mdash; the agent loop and tool calling</li>
+    <li><strong>Cloud Run</strong> &mdash; three services: collector, agent, dashboard</li>
+    <li><strong>Pub/Sub</strong> &mdash; one message per change, so a slow or failing posting cannot block the others</li>
+    <li><strong>Firestore</strong> &mdash; postings, history, decisions and profile</li>
+    <li><strong>Cloud Scheduler</strong> &mdash; the timer that makes it autonomous</li>
+    <li><strong>Greenhouse job board API</strong> &mdash; the data source</li>
+  </ul>
+
+  <p style="margin-top:22px;">
+    <a href="/architecture" style="color:var(--accent);">See exactly what happens when you press Run now &rarr;</a>
+  </p>
+
+</div>
+
+{% endblock %}

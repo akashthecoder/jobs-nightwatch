@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+{% block title %}Architecture — Jobs NightWatch{% endblock %}
+{% block content %}
+
+<div class="prose" style="max-width:940px;">
+
+  <h2 style="margin-top:26px;">What happens when you press &ldquo;Run now&rdquo;</h2>
+  <p>
+    Every step below is real. The same path runs automatically every few hours
+    when Cloud Scheduler fires instead of you clicking.
+  </p>
+
+  <div class="legend">
+    <span><i class="sw" style="background:#7aa2f7;"></i> Cloud Run service</span>
+    <span><i class="sw" style="background:#7ee787;"></i> Deterministic code &mdash; no model</span>
+    <span><i class="sw" style="background:#c792ea;"></i> Gemini 3.7 Flash</span>
+    <span><i class="sw" style="background:#8b93a5;"></i> Storage / messaging</span>
+    <span><i class="sw" style="background:#f0a868;"></i> External API</span>
+  </div>
+</div>
+
+<svg class="diagram" viewBox="0 0 940 1180" xmlns="http://www.w3.org/2000/svg"
+     role="img" aria-label="End to end flow from clicking Run now to the dashboard rendering results">
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#4a5266"/>
+    </marker>
+    <style>
+      .bx   { rx:9; stroke-width:1.5; }
+      .run  { fill:#16233d; stroke:#7aa2f7; }
+      .det  { fill:#122a1b; stroke:#7ee787; }
+      .ai   { fill:#2a1b38; stroke:#c792ea; }
+      .sto  { fill:#1d2029; stroke:#8b93a5; }
+      .ext  { fill:#2e2312; stroke:#f0a868; }
+      .t    { fill:#e6e8ee; font:600 14px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+      .s    { fill:#98a0b3; font:12px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+      .n    { fill:#0f1115; font:700 12px -apple-system,sans-serif; }
+      .nb   { fill:#7aa2f7; }
+      .note { fill:#7b839a; font:italic 12px -apple-system,sans-serif; }
+      .ln   { stroke:#4a5266; stroke-width:1.6; fill:none; }
+    </style>
+  </defs>
+
+  <!-- 0. trigger -->
+  <rect class="bx run" x="90" y="16" width="420" height="46"/>
+  <text class="t" x="110" y="37">You press &#8220;Run now&#8221;</text>
+  <text class="s" x="110" y="53">Dashboard (Cloud Run) &#183; public, no auth</text>
+  <text class="note" x="530" y="43">or Cloud Scheduler fires, every 3 hours</text>
+  <path class="ln" d="M300 62 L300 92" marker-end="url(#ar)"/>
+  <text class="s" x="310" y="82">OIDC identity token &#8212; no password, no shared secret</text>
+
+  <!-- 1. collector -->
+  <circle class="nb" cx="70" cy="118" r="12"/><text class="n" x="66" y="122">1</text>
+  <rect class="bx run" x="90" y="96" width="420" height="46"/>
+  <text class="t" x="110" y="117">Collector</text>
+  <text class="s" x="110" y="133">Cloud Run &#183; reads companies where enabled = true</text>
+  <path class="ln" d="M300 142 L300 172" marker-end="url(#ar)"/>
+
+  <!-- 2. greenhouse -->
+  <circle class="nb" cx="70" cy="198" r="12"/><text class="n" x="66" y="202">2</text>
+  <rect class="bx ext" x="90" y="176" width="420" height="46"/>
+  <text class="t" x="110" y="197">Greenhouse job board API</text>
+  <text class="s" x="110" y="213">GET /boards/{token}/jobs?content=true &#183; one call per company</text>
+  <text class="note" x="530" y="203">public, unauthenticated</text>
+  <path class="ln" d="M300 222 L300 252" marker-end="url(#ar)"/>
+
+  <!-- 3. normalize -->
+  <circle class="nb" cx="70" cy="278" r="12"/><text class="n" x="66" y="282">3</text>
+  <rect class="bx det" x="90" y="256" width="420" height="46"/>
+  <text class="t" x="110" y="277">Normalise &#38; fingerprint</text>
+  <text class="s" x="110" y="293">unescape HTML, strip tags, SHA-256 the content fields</text>
+  <text class="note" x="530" y="283">{{ stats.postings }} postings</text>
+  <path class="ln" d="M300 302 L300 332" marker-end="url(#ar)"/>
+
+  <!-- 4. diff -->
+  <circle class="nb" cx="70" cy="358" r="12"/><text class="n" x="66" y="362">4</text>
+  <rect class="bx det" x="90" y="336" width="420" height="58"/>
+  <text class="t" x="110" y="357">Diff engine &#8212; NO model</text>
+  <text class="s" x="110" y="373">compare each hash to the stored one</text>
+  <text class="s" x="110" y="389">classify: new &#183; modified &#183; removed</text>
+  <text class="note" x="530" y="360">comparing two records is a</text>
+  <text class="note" x="530" y="376">comparison, not a judgement</text>
+  <path class="ln" d="M300 394 L300 424" marker-end="url(#ar)"/>
+
+  <!-- 5. filter -->
+  <circle class="nb" cx="70" cy="450" r="12"/><text class="n" x="66" y="454">5</text>
+  <rect class="bx det" x="90" y="428" width="420" height="58"/>
+  <text class="t" x="110" y="449">Relevance gate &#8212; NO model</text>
+  <text class="s" x="110" y="465">title match, then core-skill density</text>
+  <text class="s" x="110" y="481">hard block on stated work-authorisation limits</text>
+  <text class="note" x="530" y="452">{{ stats.postings }} &#8594; {{ stats.matches }} match</text>
+  <text class="note" x="530" y="468">a cost guard, not the fit decision</text>
+  <path class="ln" d="M300 486 L300 516" marker-end="url(#ar)"/>
+
+  <!-- 6. history -->
+  <circle class="nb" cx="70" cy="542" r="12"/><text class="n" x="66" y="546">6</text>
+  <rect class="bx sto" x="90" y="520" width="420" height="46"/>
+  <text class="t" x="110" y="541">Save the previous version</text>
+  <text class="s" x="110" y="557">Firestore &#183; posting_history, written BEFORE the overwrite</text>
+  <text class="note" x="530" y="535">the agent runs later and</text>
+  <text class="note" x="530" y="551">would otherwise read the</text>
+  <text class="note" x="530" y="567">already-updated record</text>
+  <path class="ln" d="M300 566 L300 596" marker-end="url(#ar)"/>
+
+  <!-- 7. pubsub -->
+  <circle class="nb" cx="70" cy="622" r="12"/><text class="n" x="66" y="626">7</text>
+  <rect class="bx sto" x="90" y="600" width="420" height="58"/>
+  <text class="t" x="110" y="621">Pub/Sub &#8212; one message per change</text>
+  <text class="s" x="110" y="637">push subscription, OIDC authenticated</text>
+  <text class="s" x="110" y="653">ack deadline 600s, retry with backoff</text>
+  <text class="note" x="530" y="624">a slow or failing posting</text>
+  <text class="note" x="530" y="640">cannot block the others;</text>
+  <text class="note" x="530" y="656">each retries on its own</text>
+  <path class="ln" d="M300 658 L300 688" marker-end="url(#ar)"/>
+
+  <!-- 8. agent -->
+  <circle class="nb" cx="70" cy="714" r="12"/><text class="n" x="66" y="718">8</text>
+  <rect class="bx run" x="90" y="692" width="420" height="46"/>
+  <text class="t" x="110" y="713">Agent &#183; POST /pubsub-push</text>
+  <text class="s" x="110" y="729">Cloud Run + ADK &#183; skips duplicates by content hash</text>
+  <path class="ln" d="M300 738 L300 762" marker-end="url(#ar)"/>
+
+  <!-- 9. gemini + tools -->
+  <circle class="nb" cx="70" cy="800" r="12"/><text class="n" x="66" y="804">9</text>
+  <rect class="bx ai" x="90" y="766" width="420" height="128"/>
+  <text class="t" x="110" y="789">Gemini 3.7 Flash decides which tools to call</text>
+  <text class="s" x="110" y="812">&#8226; get_candidate_profile() &#8212; your background</text>
+  <text class="s" x="110" y="831">&#8226; get_previous_version() &#8212; what it said last time</text>
+  <text class="s" x="110" y="850">&#8226; check_hard_blockers() &#8212; deterministic eligibility</text>
+  <text class="s" x="110" y="869">&#8226; record_assessment() &#8212; save the verdict</text>
+  <text class="s" x="110" y="886" style="fill:#c792ea;">the model judges; tools only fetch facts and persist</text>
+  <text class="note" x="530" y="800">the ONLY model call</text>
+  <text class="note" x="530" y="816">in the whole pipeline</text>
+  <text class="note" x="530" y="840">~35s per change,</text>
+  <text class="note" x="530" y="856">all changes in parallel</text>
+  <path class="ln" d="M300 894 L300 924" marker-end="url(#ar)"/>
+
+  <!-- 10. firestore -->
+  <circle class="nb" cx="70" cy="950" r="12"/><text class="n" x="66" y="954">10</text>
+  <rect class="bx sto" x="90" y="928" width="420" height="46"/>
+  <text class="t" x="110" y="949">Firestore &#183; decisions</text>
+  <text class="s" x="110" y="965">verdict, reasoning, what changed, bullets, concerns</text>
+  <path class="ln" d="M300 974 L300 1004" marker-end="url(#ar)"/>
+
+  <!-- 11. dashboard -->
+  <circle class="nb" cx="70" cy="1030" r="12"/><text class="n" x="66" y="1034">11</text>
+  <rect class="bx run" x="90" y="1008" width="420" height="58"/>
+  <text class="t" x="110" y="1029">Dashboard renders</text>
+  <text class="s" x="110" y="1045">server-side read via the Admin SDK</text>
+  <text class="s" x="110" y="1061">the browser never talks to Firestore</text>
+  <text class="note" x="530" y="1032">so there are no client-side</text>
+  <text class="note" x="530" y="1048">security rules to get wrong</text>
+
+  <!-- timing bracket -->
+  <path class="ln" d="M62 96 L44 96 L44 658 L62 658" style="stroke:#3a4152;"/>
+  <text class="note" x="10" y="380" transform="rotate(-90 20 380)"
+        style="fill:#6f7789;">steps 1&#8211;7: about 2 seconds, no model</text>
+</svg>
+
+<div class="prose" style="max-width:760px;">
+  <h3>Why Pub/Sub is in the middle</h3>
+  <p>
+    The obvious design is a loop: for each change, call the agent. That fails
+    badly. If Gemini times out on the fourteenth posting, postings fifteen
+    through forty never get processed, and you are left in an ambiguous
+    half-finished state with no way to know what did and did not run.
+  </p>
+  <p>
+    One message per change fixes all of it. Each change succeeds or retries
+    independently with backoff, and they process in parallel &mdash; three
+    changes complete in about 48 seconds rather than three sequential 35-second
+    runs.
+  </p>
+
+  <h3>Where the model is, and is not</h3>
+  <p>
+    Only <strong>step 9</strong> involves Gemini. Steps 3 through 7 are ordinary
+    Python. That line is deliberate: a hash comparison is faster, cheaper and
+    more accurate than asking a model whether two records differ, and the
+    relevance gate exists so a model call is never spent on a role that was
+    obviously irrelevant.
+  </p>
+</div>
+
+{% endblock %}
