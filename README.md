@@ -363,9 +363,21 @@ Swapping to `google-genai` function calling would be a ~30-line change.
 
 | File | Contents |
 |---|---|
-| [`demo.md`](demo.md) | Submission checklist and how to reproduce the demo |
-| [`decisions.md`](decisions.md) | Every decision with its reasoning, and the bugs found along the way |
+| [`decisions.md`](decisions.md) | Every design decision with its reasoning and date, including the bugs found along the way |
 | [`flow.md`](flow.md) | Living system flow, Firestore collections, build status |
+
+### Reproducing a change for a demo
+
+Job postings rarely change within the span of a demo, and a company's first
+collection is baselined to silence by design. `scripts/demo_seed.py` doctors
+**stored state** — what the system believes it saw last time — so the next
+collection sees the live board differ from that history and the real production
+path executes end to end. Nothing is mocked.
+
+```bash
+.venv/bin/python scripts/demo_seed.py --reset   # seed 4 changes
+# then click "Run now" on the dashboard, or POST to the collector
+```
 
 ---
 

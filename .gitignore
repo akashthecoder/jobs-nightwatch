@@ -32,3 +32,9 @@ reading.md
 
 # generated from SUBMISSION.md by scripts/make_submission_pdf.py
 submission.html
+
+# internal working docs - kept locally, not published
+plan.md
+demo.md
+SUBMISSION.md
+scripts/make_submission_pdf.py

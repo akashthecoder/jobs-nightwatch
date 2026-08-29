@@ -147,7 +147,7 @@ def main():
     print("Seeded. Now trigger a collection:")
     print()
     print('  - click "Run now" on the dashboard, or')
-    print("  - curl the collector (see demo.md)")
+    print("  - POST to the collector's /collect endpoint")
     print()
     print("Expect ~35s per change for the agent to finish.")
     print("=" * 62)

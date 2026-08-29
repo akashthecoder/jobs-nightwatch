@@ -226,7 +226,7 @@ The hackathon requires Gemini 3.5 or greater, so this is not a preference — th
 
 **Why:** The ten boards hold **2,749 postings**. Under the original design every one is classified `new` on first sight, producing 2,749 Pub/Sub messages and 2,749 Gemini calls — material cost, a long runtime, and output nobody wants. More fundamentally it is a **category error**: "changed" is undefined when there is nothing to compare against. The product's premise is *what changed since last time*, which requires a "last time" to exist.
 
-**Consequence for the demo:** the system correctly shows **nothing** after a first run on a fresh company. The demo therefore requires a seeded before/after state rather than a cold first run — already anticipated as Risk #2 in `plan.md`.
+**Consequence for the demo:** the system correctly shows **nothing** after a first run on a fresh company. The demo therefore requires a seeded before/after state rather than a cold first run — already anticipated as a risk during planning.
 
 **Gap this closes:** the original plan specified dedup (don't re-alert on the same role forever) but never addressed the cold-start flood. Caught when the ten selected boards were summed.
 
@@ -365,7 +365,7 @@ fetch, real diff, real filter, real publish. Mocking the board response would
 exercise a different path than the one being demonstrated, which is the classic
 way a demo passes while the real system is broken.
 
-This is the mitigation for the "there is nothing to diff" risk in `plan.md`:
+This is the mitigation for the "there is nothing to diff" risk identified during planning:
 postings rarely change organically within a few days, and every company's first
 run is baselined to silence.
 
@@ -412,7 +412,7 @@ changes: the title upgrade to Senior **and** newly added AI-agent requirements.
 Also caught the 24-month contract term from the body and named a real skills
 gap (Bayesian MMM / geo-experimentation vs. the candidate's attribution work).
 
-**Significance:** this retires the largest remaining risk in `plan.md`
+**Significance:** this retires the largest remaining technical risk
 (Saturday's agent build) a day early. The instruction's explicit anti-sycophancy
 and anti-fabrication rules — "most changes are NOT worth attention", "never say
 sponsorship is available when the posting is silent" — both held under real data.
@@ -424,7 +424,7 @@ sponsorship is available when the posting is silent" — both held under real da
 **Decision:** Ship single-tenant. Do not add multi-user before the Sunday
 deadline.
 
-**Why:** it is real scope on the day `plan.md` already flags as the schedule's
+**Why:** it is real scope on the day already identified as the schedule's
 single point of failure, and judges will not test multi-tenancy. The stronger
 move is to state the boundary explicitly rather than to sit on one accidentally.
 
