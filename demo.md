@@ -18,10 +18,10 @@ Status as of **2026-08-29**. Deadline **Sunday 2026-08-30**.
 | # | Requirement | Status | Notes |
 |---|---|---|---|
 | 5 | **Select one category** | ✅ **Taskmaster** | Confirmed 2026-08-29. |
-| 6 | **Code repository URL** | ⬜ **In progress** | Repo will be **PRIVATE**. 19 commits with genuine day-by-day timestamps, ready to push. |
-| 6b | 🚨 **Grant repo access to judges** | ⬜ **MANDATORY — submission is invalid without it** | Because the repo is private, collaborator access **must** be granted to **both** `testing@devpost.com` **and** `cloudhackathons@google.com`. GitHub → Settings → Collaborators → Add people. Do this immediately after pushing, not at the end. |
+| 6 | **Code repository URL** | ✅ **Done** | https://github.com/akashthecoder/jobs-nightwatch — private, 21 commits pushed with genuine Thu→Sat timestamps. Verified no secrets in history. |
+| 6b | **Grant repo access to judges** | ✅ **Done** | `testing@devpost.com` and `cloudhackathons@google.com` added as collaborators. |
 | 7 | **README.md with spin-up instructions** | ✅ **Done** | Local setup and full cloud deploy, both step by step. Every referenced file verified to exist; both test commands verified to pass. |
-| 8 | **Text description** | ⬜ **Not started** | Must cover features, functionality, technologies, data sources, and findings/learnings. `decisions.md` is the source material — it holds every decision with its reasoning, plus the genuinely interesting bugs. |
+| 8 | **Text description** | ✅ **Drafted** | `SUBMISSION.md` — copy-paste source mapped to Devpost form fields. Covers features, technologies, data sources and findings/learnings. `scripts/make_submission_pdf.py` renders it to a print-ready page for PDF export. |
 | 9 | **Demo video (≤4 min)** | ⬜ **Not started** | See the structure below. |
 
 ### Video sub-requirements (all part of #9)

@@ -29,3 +29,6 @@ scratch/
 
 # Personal study notes — not project documentation
 reading.md
+
+# generated from SUBMISSION.md by scripts/make_submission_pdf.py
+submission.html
