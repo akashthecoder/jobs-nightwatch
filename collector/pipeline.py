@@ -123,7 +123,25 @@ def run_collection(only_board_token: str | None = None) -> RunResult:
                 store.mark_baselined(token)
                 cr.baselined_now = True
 
-            store.record_run_stats(token, len(postings), len(changes))
+            # Every posting that passes the gate, sorted -- this backs the
+            # dashboard's per-company view without a query or an index.
+            scored = []
+            for p in postings:
+                v = rel.check(p)
+                if v.passed:
+                    scored.append((v.sort_key, {
+                        "doc_id": p.doc_id,
+                        "title": p.title,
+                        "location": p.location,
+                        "department": p.department,
+                        "url": p.url,
+                        "strength": v.strength,
+                        "signals": v.signals,
+                    }))
+            scored.sort(key=lambda x: x[0])
+            store.record_run_stats(
+                token, len(postings), len(changes), [m for _, m in scored]
+            )
 
         except Exception as e:  # noqa: BLE001 - one company must not kill the run
             log.exception("collection failed for %s", token)

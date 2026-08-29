@@ -62,7 +62,12 @@ def ago(iso: str | None) -> str:
 
 
 @app.get("/", response_class=HTMLResponse)
-def index(request: Request, ran: str | None = None, error: str | None = None):
+def index(
+    request: Request,
+    company: str | None = None,
+    ran: str | None = None,
+    error: str | None = None,
+):
     companies = store.list_companies()
     decisions = store.list_decisions(limit=200)
 
@@ -70,6 +75,24 @@ def index(request: Request, ran: str | None = None, error: str | None = None):
         c["last_checked"] = ago(c.get("last_collected_at"))
     for d in decisions:
         d["when"] = ago(d.get("decided_at"))
+
+    # Company view: matching roles for one company, plus its own changes.
+    selected = None
+    matches = []
+    if company:
+        selected = next((c for c in companies if c["board_token"] == company), None)
+        if selected:
+            matches = selected.get("matches", []) or []
+            # Attach the agent's verdict where one exists. Most matching roles
+            # have never been assessed -- they passed the cheap gate but never
+            # changed, so no model call was ever warranted.
+            by_id = {d.get("doc_id"): d for d in decisions}
+            for m in matches:
+                d = by_id.get(m["doc_id"])
+                if d:
+                    m["fit_score"] = d.get("fit_score")
+                    m["assessed"] = True
+            decisions = [d for d in decisions if d.get("board_token") == company]
 
     # Surface what needs attention first; everything else is still visible
     # below, because "we looked and it is not a fit" is a useful answer too.
@@ -85,6 +108,7 @@ def index(request: Request, ran: str | None = None, error: str | None = None):
     stats = {
         "companies": sum(1 for c in companies if c.get("enabled")),
         "postings": sum(c.get("posting_count", 0) for c in companies),
+        "matches": sum(c.get("match_count", 0) for c in companies),
         "changes": len(decisions),
         "flagged": len(worth),
         "last_run": ago(last_run),
@@ -101,6 +125,8 @@ def index(request: Request, ran: str | None = None, error: str | None = None):
             "worth": worth,
             "rest": rest,
             "stats": stats,
+            "selected": selected,
+            "matches": matches,
             "ran": ran,
             "error": error,
             "has_collector": bool(COLLECTOR_URL),

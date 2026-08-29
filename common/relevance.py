@@ -23,6 +23,16 @@ class FilterResult:
     reason: str
     matched_titles: list[str]
     matched_skills: list[str]
+    # "high"   -> the title itself matched a target title
+    # "medium" -> no title match, but a dense cluster of core DS/ML skills
+    # ""       -> did not pass
+    strength: str = ""
+    signals: int = 0
+
+    @property
+    def sort_key(self) -> tuple:
+        """High before medium, then by how many signals fired."""
+        return (0 if self.strength == "high" else 1, -self.signals)
 
 
 def _compile(patterns: list[str]) -> list[re.Pattern]:
@@ -93,6 +103,8 @@ class RelevanceFilter:
                 f"title matched {matched_titles[0]!r}",
                 matched_titles,
                 matched_skills,
+                strength="high",
+                signals=len(matched_core),
             )
 
         # 4. No title hit, but a dense concentration of CORE skills still
@@ -105,6 +117,8 @@ class RelevanceFilter:
                 f"{len(matched_core)} core skills matched despite no title match",
                 [],
                 matched_skills,
+                strength="medium",
+                signals=len(matched_core),
             )
 
         return FilterResult(

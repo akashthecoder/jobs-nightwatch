@@ -599,3 +599,58 @@ bills nothing when idle — measured cold start 5.2s, warm 2.4s. `min-instances=
 is to be enabled **only while recording the demo**, then turned off; leaving it
 on through a ~2 month judging window would cost $120–240. `max-instances` caps
 (5 / 2 / 10) bound the worst case against a retry storm or crawler.
+
+---
+
+## 2026-08-29 — Company filter view: "N of M roles match your profile"
+
+**Decision:** Company chips act as filters and show `matches/total`. Clicking one
+lists that company's qualifying roles ordered by match strength; **All** returns
+to the change feed.
+
+**What "qualifying" means — and what it deliberately does not.** Only roles that
+pass the *deterministic* relevance gate are listed. They are **not** scored by
+Gemini. Assessing all 315 matching roles would cost ~315 model calls (~3 hours)
+to tell the candidate nothing new — the model's job is explaining what *changed*,
+not re-ranking a static list. Where a role also happens to have been assessed
+(because it changed), its real `fit_score` is shown; the rest are labelled
+"not changed". Nothing is presented as model-judged when it was not.
+
+**Two tiers, from the filter that already existed:**
+
+| Tier | Meaning |
+|---|---|
+| **high** | The title itself matched a target title |
+| **medium** | No title match, but ≥4 core DS/ML skills clustered in the body |
+
+No invented numeric score. A fabricated number sitting beside the agent's real
+`fit_score` would imply a judgement that never happened; ordering is by tier,
+then by signal count.
+
+**Live results (2026-08-29):**
+
+| Company | Match | Total | % |
+|---|---|---|---|
+| Databricks | 61 | 858 | 7.1% |
+| Datadog | 21 | 454 | 4.6% |
+| Cloudflare | 14 | 309 | 4.5% |
+| Pinterest | 54 | 209 | 25.8% |
+| Affirm | 24 | 210 | 11.4% |
+| Coinbase | 22 | 188 | 11.7% |
+| Airbnb | 42 | 171 | 24.6% |
+| Reddit | 54 | 153 | 35.3% |
+| Twilio | 13 | 144 | 9.0% |
+| SoFi | 10 | 60 | 16.7% |
+| **Total** | **315** | **2,756** | **11.4%** |
+
+**Implementation note:** the matching list is written onto the *company document*
+during collection, not queried at render time. One read per company instead of
+scanning thousands of postings, and no composite index — consistent with the
+get-by-id design chosen on 2026-08-26. Capped at 100 entries per company to stay
+inside Firestore's 1 MB document limit.
+
+**Framing tension, acknowledged:** a per-company list of matching jobs is closer
+to a job-board view, and the product's thesis is that job boards are the wrong
+shape. It earns its place by making the filtering *visible* — "54 of 153 Reddit
+roles match you" demonstrates the system understands the profile — but changes
+remain the headline and the only thing the model is spent on.

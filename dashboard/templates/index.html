@@ -92,6 +92,28 @@
          border-radius:7px; font-weight:600; cursor:pointer; font-size:14px; }
   .empty { color:var(--muted); padding:24px; text-align:center; }
   form.inline { display:inline; }
+
+  /* company filter chips */
+  .chip.filter { text-decoration:none; cursor:pointer; }
+  .chip.filter:hover { border-color:var(--accent); }
+  .chip.filter.active { border-color:var(--accent); background:#1d2740; }
+  .chip-link { display:flex; align-items:center; gap:7px; text-decoration:none; color:inherit; }
+  .chip .sub b { color:var(--accent); }
+
+  /* matching-roles list */
+  .mrow { display:flex; align-items:center; gap:12px; padding:10px 16px;
+          border-bottom:1px solid var(--line); }
+  .mrow:last-child { border-bottom:none; }
+  .mtitle { flex:1; min-width:0; }
+  .mtitle a { text-decoration:none; font-weight:500; }
+  .mtitle a:hover { color:var(--accent); }
+  .strength { font-size:10px; text-transform:uppercase; letter-spacing:.6px;
+              font-weight:700; padding:2px 7px; border-radius:4px; min-width:58px;
+              text-align:center; }
+  .s-high { background:#14361f; color:#7ee787; }
+  .s-medium { background:#2f2a12; color:#e3c76a; }
+  .assessed { font-size:11px; color:var(--accent); white-space:nowrap; }
+  .unassessed { font-size:11px; color:var(--off); white-space:nowrap; }
   .hdr-row { display:flex; justify-content:space-between; align-items:center; gap:12px; }
 </style>
 </head>
@@ -109,13 +131,14 @@
   <div class="stats">
     <div class="stat"><div class="n">{{ stats.companies }}</div><div class="l">Companies</div></div>
     <div class="stat"><div class="n">{{ stats.postings }}</div><div class="l">Postings watched</div></div>
+    <div class="stat"><div class="n">{{ stats.matches }}</div><div class="l">Match your profile</div></div>
     <div class="stat"><div class="n">{{ stats.changes }}</div><div class="l">Changes assessed</div></div>
     <div class="stat"><div class="n">{{ stats.flagged }}</div><div class="l">Need attention</div></div>
     <div class="stat live"><div class="n">{{ stats.last_run or '—' }}</div><div class="l">Last run</div></div>
   </div>
 
   <div class="hdr-row">
-    <h2 style="margin:22px 0 11px;">Tracked companies</h2>
+    <h2 style="margin:22px 0 11px;">Companies &mdash; click to filter</h2>
     {% if has_collector %}
     <form class="inline" method="post" action="/run-now">
       <button class="btn" type="submit">Run now</button>
@@ -124,13 +147,21 @@
   </div>
 
   <div class="panel companies">
+    <a class="chip filter {% if not selected %}active{% endif %}" href="/">
+      <strong>All</strong>
+      <span class="sub">{{ stats.matches }} matching</span>
+    </a>
     {% for c in companies %}
-    <span class="chip {% if not c.enabled %}off{% endif %}">
-      <span class="dot"></span>
-      {{ c.name }}
-      <span class="sub">
-        {%- if not c.baselined %}baselining{% elif c.last_checked %}{{ c.last_checked }}{% endif -%}
-      </span>
+    <span class="chip filter {% if selected and selected.board_token == c.board_token %}active{% endif %} {% if not c.enabled %}off{% endif %}">
+      <a href="/?company={{ c.board_token }}" class="chip-link">
+        <span class="dot"></span>
+        {{ c.name }}
+        <span class="sub">
+          {%- if not c.baselined %}baselining
+          {%- elif c.match_count is defined %}<b>{{ c.match_count }}</b>/{{ c.posting_count }}
+          {%- elif c.last_checked %}{{ c.last_checked }}{% endif -%}
+        </span>
+      </a>
       <form class="inline" method="post" action="/toggle">
         <input type="hidden" name="board_token" value="{{ c.board_token }}">
         <input type="hidden" name="enabled" value="{{ 'false' if c.enabled else 'true' }}">
@@ -140,7 +171,36 @@
     {% endfor %}
   </div>
 
-  <h2>Needs your attention ({{ worth|length }})</h2>
+  {% if selected %}
+    <h2>
+      {{ selected.name }} &mdash; {{ selected.match_count or 0 }} of {{ selected.posting_count or 0 }} roles match your profile
+    </h2>
+    <div class="panel" style="padding:0;">
+      {% for m in matches %}
+      <div class="mrow">
+        <span class="strength s-{{ m.strength }}">{{ m.strength }}</span>
+        <div class="mtitle">
+          <a href="{{ m.url }}" target="_blank" rel="noopener">{{ m.title }}</a>
+          <div class="meta">{{ m.location }}{% if m.department %} &middot; {{ m.department }}{% endif %}</div>
+        </div>
+        {% if m.assessed %}
+          <span class="assessed">assessed &middot; {{ m.fit_score }}</span>
+        {% else %}
+          <span class="unassessed">not changed</span>
+        {% endif %}
+      </div>
+      {% else %}
+      <div class="empty">No roles from {{ selected.name }} passed the relevance gate.</div>
+      {% endfor %}
+    </div>
+    <p class="meta" style="margin-top:9px;">
+      These passed the deterministic relevance gate. Only roles that <em>changed</em> are
+      sent to Gemini for a full assessment &mdash; scoring all {{ selected.match_count or 0 }}
+      would cost model calls without telling you anything new.
+    </p>
+  {% endif %}
+
+  <h2>{% if selected %}{{ selected.name }} &mdash; changes {% else %}Needs your attention {% endif %}({{ worth|length }})</h2>
   {% if not worth %}
     <div class="panel empty">
       Nothing needs your attention right now.<br>

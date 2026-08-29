@@ -83,19 +83,30 @@ def mark_baselined(board_token: str) -> None:
     db().collection(COMPANIES).document(board_token).update({"baselined": True})
 
 
-def record_run_stats(board_token: str, posting_count: int, change_count: int) -> None:
+def record_run_stats(
+    board_token: str,
+    posting_count: int,
+    change_count: int,
+    matches: list[dict] | None = None,
+) -> None:
     """Stamp a company with the outcome of the run that just finished.
 
-    The dashboard renders these so a visitor can see the system is actually
-    running on a timer, rather than showing a static page of past results.
+    `matches` is the list of postings that passed the relevance gate, already
+    sorted. It is stored ON THE COMPANY DOCUMENT rather than queried, so the
+    dashboard needs one read per company instead of scanning thousands of
+    postings -- and no composite index has to exist.
+
+    Capped at 100 entries to stay well inside Firestore's 1 MB document limit.
     """
-    db().collection(COMPANIES).document(board_token).update(
-        {
-            "last_collected_at": datetime.now(timezone.utc).isoformat(),
-            "posting_count": posting_count,
-            "last_change_count": change_count,
-        }
-    )
+    payload = {
+        "last_collected_at": datetime.now(timezone.utc).isoformat(),
+        "posting_count": posting_count,
+        "last_change_count": change_count,
+    }
+    if matches is not None:
+        payload["matches"] = matches[:100]
+        payload["match_count"] = len(matches)
+    db().collection(COMPANIES).document(board_token).update(payload)
 
 
 # --------------------------------------------------------------------------
