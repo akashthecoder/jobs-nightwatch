@@ -1,17 +1,74 @@
 # Demo Guide — Jobs NightWatch
 
-How to reproduce the demo, and why it has to be seeded.
+## Submission checklist
+
+Status as of **2026-08-29**. Deadline **Sunday 2026-08-30**.
+
+### ✅ Done
+
+| # | Requirement | Status |
+|---|---|---|
+| 1 | **Built with required developer tools** | ✅ Google **ADK 2.8.0** drives the agent loop; **Gemini 3.7 Flash** via **Vertex AI**. The rules require at least one of ADK / Genkit / Google GenAI SDK, and Gemini 3.5 or greater — both satisfied. |
+| 2 | **Hosted project URL** | ✅ https://nightwatch-dashboard-745162634071.us-central1.run.app — public, no sign-in, judges can click and interact. |
+| 3 | **Architecture diagram** | ✅ Live page at `/architecture` showing Gemini, backend, database and frontend, with 9 numbered edges tracing one request. **Note:** Devpost may want an image upload — screenshot the page if so. |
+| 4 | **Backend demonstrably on Google Cloud** | ✅ Three Cloud Run services, Pub/Sub, Firestore, Cloud Scheduler, Vertex AI — all live in project `jobs-nightwatch`. The video must *show* this (see below). |
+
+### ⬜ To do
+
+| # | Requirement | Status | Notes |
+|---|---|---|---|
+| 5 | **Select one category** | ⬜ **Blocked on you** | You said you know which one. Nothing in the build depends on it, but the form requires it. |
+| 6 | **Public code repository URL** | ⬜ **Not started** | 18 commits exist locally with genuine day-by-day timestamps, but **no remote is configured and nothing has been pushed.** Needs a GitHub repo + push. If private, grant access to `testing@devpost.com` and `cloudhackathons@google.com`. |
+| 7 | **README.md with spin-up instructions** | ⬜ **Not started** | **There is no README.md at all.** This is an explicit requirement — a step-by-step guide to running locally or deploying to the cloud. |
+| 8 | **Text description** | ⬜ **Not started** | Must cover features, functionality, technologies, data sources, and findings/learnings. `decisions.md` is the source material — it holds every decision with its reasoning, plus the genuinely interesting bugs. |
+| 9 | **Demo video (≤4 min)** | ⬜ **Not started** | See the structure below. |
+
+### Video sub-requirements (all part of #9)
+
+| Requirement | Status |
+|---|---|
+| Overview of the problem being solved | ⬜ |
+| Value proposition stated | ⬜ |
+| Demo of the application in action | ⬜ |
+| **Shows the backend running on Google Cloud** — Cloud Console, Cloud Run dashboard, Vertex AI logs, or a `.run.app` URL | ⬜ Mandatory, easy to forget |
+| 4 minutes or less | ⬜ Only the first 4 minutes are evaluated |
+| Publicly visible on YouTube or Vimeo | ⬜ Must be public, not unlisted-only-to-you |
+| Link provided on the submission form | ⬜ |
+| English, or English subtitles | ⬜ |
+| No offensive / derogatory / discriminatory content | ⬜ |
+| No unlawful content | ⬜ |
+| **No third-party ads, logos, trademarks or implied endorsement** | ⬜ Note: the diagram uses **custom-drawn icons**, not Google's official marks, deliberately for this reason. Be careful filming company names on job boards — Reddit/Databricks logos may appear on their careers pages. |
+
+### Suggested order for the remaining work
+
+1. **README.md** — required, and needed before pushing the repo anyway
+2. **Create GitHub repo and push** — 18 commits with real history
+3. **Record the video** — do this before writing the description; recording surfaces details worth mentioning
+4. **Write the text description** — pull findings straight from `decisions.md`
+5. **Pick the category and submit** — leave buffer for upload and processing
+
+### Useful facts for the write-up
+
+- **2,756** postings watched across **10** companies
+- **315** match the profile (11.4%) — the deterministic gate never spends a model call on the other 2,441
+- **~35 seconds** per change end to end; three changes complete in ~48s because Pub/Sub processes them in parallel
+- Gemini is invoked at exactly **one** point in the pipeline; everything before it is deterministic
+- Best "learnings" material in `decisions.md`: the async race condition that passed every local test and failed silently only in production, and the sponsorship regex that silently dropped all 313 Cloudflare postings because of export-control boilerplate
 
 ---
 
-## Why the demo needs seeding
+## Reproducing the demo
+
+How to reproduce the demo, and why it has to be seeded.
+
+### Why the demo needs seeding
 
 Two properties of the system make a "just press play" demo impossible, and both
 are deliberate:
 
 1. **A company's first collection reports nothing.** Baselining is by design —
    "changed" is undefined with no previous version to compare against. Treating
-   first sight as "new" would fire one alert per posting across 2,762 postings.
+   first sight as "new" would fire one alert per posting across 2,756 postings.
 2. **Real job postings rarely change within the span of a recording.** Waiting
    for an organic change is not a demo plan.
 
