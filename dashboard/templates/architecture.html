@@ -103,11 +103,11 @@
   <text class="sub" x="104" y="113">judges can click anything</text>
 
   <!-- greenhouse -->
-  <rect class="card" x="852" y="52" width="248" height="72" fill="#241d10" stroke="#c98b30"/>
-  <g color="#f0b45f"><use href="#i-api" x="872" y="72" width="26" height="26"/></g>
-  <text class="lbl" x="910" y="81">Greenhouse Job Board API</text>
-  <text class="sub" x="910" y="98">10 company boards</text>
-  <text class="sub" x="910" y="113">public · unauthenticated · 1 call each</text>
+  <rect class="card" x="820" y="52" width="290" height="72" fill="#241d10" stroke="#c98b30"/>
+  <g color="#f0b45f"><use href="#i-api" x="840" y="72" width="26" height="26"/></g>
+  <text class="lbl" x="878" y="81">Greenhouse Job Board API</text>
+  <text class="sub" x="878" y="98">10 company boards · public</text>
+  <text class="sub" x="878" y="113">unauthenticated · one call each</text>
 
   <!-- ══ google cloud boundary ═════════════════════════════ -->
   <rect x="14" y="160" width="1112" height="700" rx="13" fill="#101319"
@@ -124,11 +124,11 @@
   <text class="sub" x="104" y="283">cron · every 3 hours</text>
   <text class="sub" x="104" y="298">OIDC service account</text>
 
-  <rect class="card" x="304" y="236" width="212" height="76" fill="#15233c" stroke="#4285F4"/>
-  <g color="#8ab4f8"><use href="#i-run" x="324" y="258" width="26" height="26"/></g>
-  <text class="lbl" x="362" y="266">Dashboard</text>
-  <text class="sub" x="362" y="283">Cloud Run · public</text>
-  <text class="sub" x="362" y="298">&#8220;Run now&#8221; button</text>
+  <rect class="card" x="314" y="236" width="240" height="76" fill="#15233c" stroke="#4285F4"/>
+  <g color="#8ab4f8"><use href="#i-run" x="334" y="258" width="26" height="26"/></g>
+  <text class="lbl" x="372" y="266">Dashboard</text>
+  <text class="sub" x="372" y="283">Cloud Run · server-rendered</text>
+  <text class="sub" x="372" y="298">public · &#8220;Run now&#8221; button</text>
 
   <!-- ── tier 2 : ingest & detect ─────────────────────────── -->
   <text class="tier" x="34" y="358">INGEST &amp; DETECT</text>
@@ -173,13 +173,13 @@
   <text class="sub" x="632" y="673">idempotent by content hash</text>
   <text class="sub" x="632" y="694">4 tools · model picks which</text>
 
-  <rect class="card" x="888" y="586" width="212" height="122" fill="#0f2418" stroke="#34A853"/>
-  <g color="#6ddd8f"><use href="#i-ai" x="908" y="606" width="26" height="26"/></g>
-  <text class="lbl" x="946" y="614">Vertex AI</text>
-  <text class="sub" x="946" y="630">Gemini 3.7 Flash</text>
-  <text class="sub" x="908" y="656">the ONLY model call</text>
-  <text class="sub" x="908" y="673">in the whole pipeline</text>
-  <text class="sub" x="908" y="694">~35s per change</text>
+  <rect class="card" x="882" y="586" width="218" height="122" fill="#0f2418" stroke="#34A853"/>
+  <g color="#6ddd8f"><use href="#i-ai" x="902" y="606" width="26" height="26"/></g>
+  <text class="lbl" x="940" y="614">Vertex AI</text>
+  <text class="sub" x="940" y="630">Gemini 3.7 Flash</text>
+  <text class="sub" x="902" y="656">the ONLY model call</text>
+  <text class="sub" x="902" y="673">in the whole pipeline</text>
+  <text class="sub" x="902" y="694">~35s per change</text>
 
   <!-- ── tier 4 : state ───────────────────────────────────── -->
   <text class="tier" x="34" y="754">STATE</text>
@@ -203,7 +203,7 @@
   <circle class="numbg" cx="164" cy="343" r="11"/><text class="num" x="160.5" y="347">1</text>
 
   <!-- 1b dashboard "run now" -> collector -->
-  <path class="edge" d="M410 312 L410 340 L230 340 L230 374" marker-end="url(#a)"/>
+  <path class="edge" d="M434 312 L434 340 L230 340 L230 374" marker-end="url(#a)"/>
 
   <!-- 2 collector -> greenhouse (up and out) -->
   <path class="edge" d="M376 400 L560 400 L560 200 L976 200 L976 128" marker-end="url(#a)"/>
@@ -228,24 +228,23 @@
   <circle class="numbg" cx="731" cy="555" r="11"/><text class="num" x="727.5" y="559">5</text>
 
   <!-- 6 agent <-> gemini -->
-  <path class="edge" d="M850 640 L888 640" marker-end="url(#a)"/>
-  <path class="edge" d="M888 664 L850 664" marker-end="url(#a)"/>
-  <circle class="numbg" cx="869" cy="612" r="11"/><text class="num" x="865.5" y="616">6</text>
+  <path class="edge" d="M850 640 L882 640" marker-end="url(#a)"/>
+  <path class="edge" d="M882 664 L850 664" marker-end="url(#a)"/>
+  <circle class="numbg" cx="866" cy="612" r="11"/><text class="num" x="862.5" y="616">6</text>
 
   <!-- 7 agent <-> firestore -->
   <path class="edge" d="M700 708 L700 768" marker-end="url(#a)"/>
   <circle class="numbg" cx="700" cy="738" r="11"/><text class="num" x="696.5" y="742">7</text>
-  <text class="note" x="716" y="734">tools read profile &amp; history,</text>
-  <text class="note" x="716" y="748">then write the decision</text>
+  <text class="note" x="716" y="724">tools read profile &amp; history,</text>
+  <text class="note" x="716" y="738">then write the decision</text>
 
   <!-- 8 firestore -> dashboard -->
-  <path class="edge dash" d="M46 806 L26 806 L26 274 L304 274" marker-end="url(#a)"/>
+  <path class="edge dash" d="M46 806 L26 806 L26 274 L314 274" marker-end="url(#a)"/>
   <circle class="numbg" cx="26" cy="540" r="11"/><text class="num" x="22.5" y="544">8</text>
 
   <!-- 9 dashboard -> browser -->
-  <path class="edge" d="M410 236 L410 212 L160 212 L160 124" marker-end="url(#a)"/>
-  <circle class="numbg" cx="160" cy="176" r="11"/><text class="num" x="156.5" y="180">9</text>
-  <text class="note" x="176" y="216">server-rendered HTML</text>
+  <path class="edge" d="M434 236 L434 204 L160 204 L160 128" marker-end="url(#a)"/>
+  <circle class="numbg" cx="160" cy="168" r="11"/><text class="num" x="156.5" y="172">9</text>
 </svg>
 
 <div class="prose" style="max-width:1000px;">
