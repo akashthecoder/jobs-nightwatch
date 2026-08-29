@@ -18,7 +18,8 @@ Status as of **2026-08-29**. Deadline **Sunday 2026-08-30**.
 | # | Requirement | Status | Notes |
 |---|---|---|---|
 | 5 | **Select one category** | ✅ **Taskmaster** | Confirmed 2026-08-29. |
-| 6 | **Public code repository URL** | ⬜ **Not started** | 18 commits exist locally with genuine day-by-day timestamps, but **no remote is configured and nothing has been pushed.** Needs a GitHub repo + push. If private, grant access to `testing@devpost.com` and `cloudhackathons@google.com`. |
+| 6 | **Code repository URL** | ⬜ **In progress** | Repo will be **PRIVATE**. 19 commits with genuine day-by-day timestamps, ready to push. |
+| 6b | 🚨 **Grant repo access to judges** | ⬜ **MANDATORY — submission is invalid without it** | Because the repo is private, collaborator access **must** be granted to **both** `testing@devpost.com` **and** `cloudhackathons@google.com`. GitHub → Settings → Collaborators → Add people. Do this immediately after pushing, not at the end. |
 | 7 | **README.md with spin-up instructions** | ✅ **Done** | Local setup and full cloud deploy, both step by step. Every referenced file verified to exist; both test commands verified to pass. |
 | 8 | **Text description** | ⬜ **Not started** | Must cover features, functionality, technologies, data sources, and findings/learnings. `decisions.md` is the source material — it holds every decision with its reasoning, plus the genuinely interesting bugs. |
 | 9 | **Demo video (≤4 min)** | ⬜ **Not started** | See the structure below. |
