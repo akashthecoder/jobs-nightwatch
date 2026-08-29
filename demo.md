@@ -17,9 +17,9 @@ Status as of **2026-08-29**. Deadline **Sunday 2026-08-30**.
 
 | # | Requirement | Status | Notes |
 |---|---|---|---|
-| 5 | **Select one category** | ⬜ **Blocked on you** | You said you know which one. Nothing in the build depends on it, but the form requires it. |
+| 5 | **Select one category** | ✅ **Taskmaster** | Confirmed 2026-08-29. |
 | 6 | **Public code repository URL** | ⬜ **Not started** | 18 commits exist locally with genuine day-by-day timestamps, but **no remote is configured and nothing has been pushed.** Needs a GitHub repo + push. If private, grant access to `testing@devpost.com` and `cloudhackathons@google.com`. |
-| 7 | **README.md with spin-up instructions** | ⬜ **Not started** | **There is no README.md at all.** This is an explicit requirement — a step-by-step guide to running locally or deploying to the cloud. |
+| 7 | **README.md with spin-up instructions** | ✅ **Done** | Local setup and full cloud deploy, both step by step. Every referenced file verified to exist; both test commands verified to pass. |
 | 8 | **Text description** | ⬜ **Not started** | Must cover features, functionality, technologies, data sources, and findings/learnings. `decisions.md` is the source material — it holds every decision with its reasoning, plus the genuinely interesting bugs. |
 | 9 | **Demo video (≤4 min)** | ⬜ **Not started** | See the structure below. |
 
