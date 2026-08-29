@@ -3,7 +3,7 @@
 **Living document.** Update this whenever anything changes: a new service, a changed data shape, a new deployed URL.
 This is the source material for the architecture diagram due Sunday Aug 30 — keeping it current is what makes that diagram a 20-minute job instead of a 2-hour one.
 
-**Last updated:** 2026-08-27 — environment verified, Vertex AI auth confirmed working.
+**Last updated:** 2026-08-29 — fully deployed to Cloud Run, end-to-end verified.
 
 ---
 
@@ -57,12 +57,19 @@ def my_tool(title: str, body: str) -> dict:
 agent = Agent(name=..., model="gemini-3.7-flash",
               instruction=..., tools=[my_tool])
 runner = InMemoryRunner(agent=agent, app_name=...)
-events = await runner.run_debug(prompt, quiet=True)   # NOTE: async!
+
+# Production path (agent/agent.py). Runner does NOT auto-create sessions.
+session = await runner.session_service.create_session(
+    app_name=APP_NAME, user_id=user_id)
+async for ev in runner.run_async(
+        user_id=user_id, session_id=session.id,
+        new_message=types.Content(role="user", parts=[types.Part(text=prompt)])):
+    events.append(ev)
 ```
 
 Tool activity is confirmed by scanning events for `part.function_call` /
-`part.function_response`. `run_debug` is for local testing; the Pub/Sub handler
-will use `runner.run_async(user_id=..., session_id=..., new_message=...)`.
+`part.function_response`. `run_debug(prompt)` is a local testing convenience —
+note it is **async despite a synchronous-looking signature**.
 
 Legend: ⬜ not started · 🟨 in progress · ✅ working locally · 🚀 deployed
 
@@ -97,14 +104,15 @@ Cloud Scheduler (every N hours)
    Pub/Sub topic  (one message per surviving change)
         │  push subscription, OIDC-authenticated
         ▼
-   Agent  (Cloud Run + ADK + Gemini)
+   Agent  (Cloud Run + ADK + Gemini 3.7 Flash)
         │  POST /pubsub-push — decode base64 envelope, one change per message
-        │  tools the model chooses to call:
-        │    · compare_to_resume(posting_text, profile)
-        │    · decide_worth_attention(...)
-        │    · draft_application_bullets(...)
-        │  writes decisions/{company}_{external_id} with reasoning
-        │  dedup check against last-alerted hash
+        │  idempotency: skip if doc_id + content_hash already assessed
+        │  tools the model CHOOSES to call (it decides which apply):
+        │    · get_candidate_profile()      — fetch profile from Firestore
+        │    · get_previous_version(doc_id) — what the posting said last time
+        │    · check_hard_blockers(text)    — deterministic eligibility match
+        │    · record_assessment(...)       — persist the verdict
+        │  the MODEL does all judgement; tools only fetch facts and persist
         ▼
    Firestore
         ▲
@@ -127,10 +135,17 @@ Cloud Scheduler (every N hours)
 |---|---|---|
 | `companies` | `{board_token}` | Company name, Greenhouse board token, `enabled` bool, `baselined` bool |
 | `postings` | `{company}_{external_id}` | Current normalized posting state + `content_hash` |
-| `decisions` | `{company}_{external_id}` | Agent verdict, reasoning, draft bullets, change type, timestamp |
+| `posting_history` | `{board_token}_{external_id}` | The version a posting had BEFORE the latest change. Written by the collector *before* it overwrites `postings`. Backs `get_previous_version`. |
+| `decisions` | `{board_token}_{external_id}` | Agent verdict, reasoning, draft bullets, change type, timestamp |
 | `profiles` | `default` | Resume/profile used for fit comparison |
 
-Keyed by `(company, external_id)` so diffing is a get-by-ID — **no queries, no composite indexes.**
+Keyed by `(board_token, external_id)` so diffing is a get-by-ID — **no queries, no composite indexes.**
+
+`posting_history` exists because the agent runs **asynchronously**. The collector
+publishes to Pub/Sub then immediately overwrites `postings`, so by the time the
+agent asks what a posting used to say, the live record already holds the new
+text. Without a separate history snapshot the agent reports "nothing changed"
+for every modification — a bug that only appears once deployed.
 `profiles` is keyed by ID rather than being a single global blob so per-user upload is possible later without a migration.
 
 ---
@@ -155,7 +170,7 @@ content_hash      str    # what change detection compares
 
 ## Tracked companies
 
-10 Greenhouse boards, **2,749 postings total** (verified live 2026-08-27):
+10 Greenhouse boards, **2,755 postings** (live count 2026-08-29; the boards move daily):
 
 | Board token | Company | Postings |
 |---|---|---|
