@@ -41,3 +41,5 @@ buildlog.md
 recording.md
 script-cards.txt
 scripts/make_submission_pdf.py
+
+tail_agent.sh
