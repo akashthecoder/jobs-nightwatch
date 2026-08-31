@@ -40,6 +40,7 @@ SUBMISSION.md
 buildlog.md
 recording.md
 script-cards.txt
+devpost-description.md
 scripts/make_submission_pdf.py
 
 tail_agent.sh
